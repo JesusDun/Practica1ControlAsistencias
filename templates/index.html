@@ -1,12 +1,25 @@
-<div class="float-end mt-1 me-3" style="font-size: 1.25rem;">
-    <i class="bi bi-clock"></i>
-    {{ '{{ angularjsHora }}' }}
-    
-    <span ng-if="usuarioLogueado" class="ms-3">
-        <i class="bi bi-person-circle"></i>
-        {{ '{{ nombreUsuario }}' }}
-        <button class="btn btn-sm btn-outline-secondary ms-2" ng-click="cerrarSesion()">
-            Cerrar Sesión
-        </button>
-    </span>
-</div>
+<body>
+    <div class="float-end mt-1 me-3" style="font-size: 1.25rem;">
+        <i class="bi bi-clock"></i>
+         {{ '{{ angularjsHora }}' }}
+    </div>
+
+    <ul class="app-menu nav nav-underline justify-content-center">
+        <li class="nav-item">
+            <a class="nav-link" href="#/">Inicio</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#/empleados">Empleados</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#/asistencias">Asistencias</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#/asistenciaspases">Pases de Asistencia</a>
+        </li>
+    </ul>
+
+    <div id="appContent" class="app-content container p-3 {{ '{{ slide }}' }}" ng-view></div>
+
+    </body>
+</html>
