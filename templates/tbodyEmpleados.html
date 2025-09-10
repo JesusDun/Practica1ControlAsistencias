@@ -1,0 +1,12 @@
+{% for empleado in empleados %}
+<tr>
+    <td>{{ empleado.idEmpleado }}</td>
+    <td>{{ empleado.nombreEmpleado }}</td>
+    <td>{{ empleado.numero }}</td>
+    <td>{{ empleado.fechaIngreso }}</td>
+    <td>
+        <button class="btn btn-sm btn-warning btn-editar" data-id="{{ empleado.idEmpleado }}">Editar</button>
+        <button class="btn btn-sm btn-danger btn-eliminar" data-id="{{ empleado.idEmpleado }}">Eliminar</button>
+    </td>
+</tr>
+{% endfor %}
