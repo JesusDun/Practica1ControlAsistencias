@@ -201,3 +201,20 @@ def eliminarAsistenciaPase():
     con.close()
 
     return make_response(jsonify({}))
+
+@app.route("/departamentos")
+def departamentos():
+    return render_template("departamentos.html")
+
+@app.route("/tbodyDepartamentos")
+def tbodyDepartamentos():
+    if not con.is_connected():
+        con.reconnect()
+
+    cursor = con.cursor(dictionary=True)
+    # READ (LECTURA)
+    sql    = "SELECT idDepartamento, NombreDepartamento, Edificio, Descripcion FROM departamento ORDER BY idDepartamento DESC"
+    cursor.execute(sql)
+    registros = cursor.fetchall()
+    con.close()
+    return render_template("tbodyDepartamentos.html", departamentos=registros)
