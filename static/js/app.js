@@ -159,9 +159,13 @@ app.controller("asistenciaspasesCtrl", function ($scope, $http) {
         }
     })
 })
+
 //Controlador para departamentos.
 app.controller("departamentosCtrl", function ($scoope, $http) {
-    function buscarDepartamentos() {
+     function buscarDepartamentos() {
+        $.get("/tbodyDepartamentos", function (trsHTML) {
+            $("#tbodyDepartamentos").html(trsHTML)
+        })
     }
     buscarDepartamentos()
 })
