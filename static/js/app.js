@@ -105,7 +105,7 @@ app.controller("empleadosCtrl", function ($scope, $http) {
     $(document).on("submit", "#frmEmpleado", function (event) {
         event.preventDefault()
         // CREATE/UPDATE
-        $.post("/empleado", $(this).serialize())
+        $.post("/empleados", $(this).serialize())
         .done(function() {
             buscarEmpleados();
         })
