@@ -137,6 +137,22 @@ app.controller("asistenciasCtrl", function ($scope, $http) {
         // CREATE
         $.post("/asistencia", $(this).serialize())
     })
+
+    $(document).on("click", ".btn-editar-asistencia", function () {
+    const id = $(this).data("id")
+    const fecha = $(this).data("fecha")
+    const comentarios = $(this).data("comentarios")
+
+    $("#txtFecha").val(fecha)
+    $("#txtComentarios").val(comentarios)
+
+    // Guarda el ID en un campo oculto para saber si es edición
+    if ($("#hiddenId").length === 0) {
+        $("#frmAsistencia").append(`<input type="hidden" id="hiddenId" name="id">`)
+    }
+    $("#hiddenId").val(id)
+})
+
 })
 
 // Controlador para AsistenciasPases (N Capas)
