@@ -216,5 +216,5 @@ def tbodyDepartamentos():
     sql    = "SELECT idDepartamento, NombreDepartamento, Edificio, Descripcion FROM departamento ORDER BY idDepartamento DESC"
     cursor.execute(sql)
     registros = cursor.fetchall()
-    con.close()s
+    con.close()
     return render_template("tbodyDepartamentos.html", departamentos=registros)
