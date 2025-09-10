@@ -1,0 +1,11 @@
+{% for pase in asistenciaspases %}
+<tr>
+    <td>{{ pase.idAsistenciaPase }}</td>
+    <td>{{ pase.nombreEmpleado }}</td>
+    <td>{{ pase.fechaAsistencia }}</td>
+    <td>{{ pase.estado }}</td>
+    <td>
+        <button class="btn btn-danger btn-sm btn-eliminar-pase" data-id="{{ pase.idAsistenciaPase }}">Eliminar</button>
+    </td>
+</tr>
+{% endfor %}
