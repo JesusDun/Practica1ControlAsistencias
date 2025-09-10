@@ -151,6 +151,28 @@ def guardarAsistencia():
     con.commit()
     con.close()
 
+    # UPDATE (Editar)
+    @app.route("/asistencia/editar", methods=["POST"])
+def editarAsistencia():
+    if not con.is_connected():
+        con.reconnect()
+
+    idAsistencia = request.form["id"]
+    fecha        = request.form["fecha"]
+    comentarios  = request.form["comentarios"]
+
+    cursor = con.cursor()
+    # UPDATE (EDITAR)
+    sql = "UPDATE asistencias SET fecha = %s, comentarios = %s WHERE idAsistencia = %s"
+    val = (fecha, comentarios, idAsistencia)
+
+    cursor.execute(sql, val)
+    con.commit()
+    con.close()
+
+    pusherAsistencias()  # Notifica al frontend que hubo un cambio
+    return make_response(jsonify({}))
+
     pusherAsistencias() # Emite el evento para la actualización en tiempo real.
     return make_response(jsonify({}))
 
