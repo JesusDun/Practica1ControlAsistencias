@@ -5,12 +5,7 @@
     <td>{{ empleado.numero }}</td>
     <td>{{ empleado.fechaIngreso }}</td>
     <td>
-        <button class="btn btn-sm btn-warning me-1" ng-click="editarEmpleado({{ empleado.idEmpleado }})">
-            Editar
-        </button>
-        <button class="btn btn-sm btn-danger" ng-click="eliminarEmpleado({{ empleado.idEmpleado }})">
-            Eliminar
-        </button>
+        <button class="btn btn-warning btn-sm" data-id="{{ empleado.idEmpleado }}">Editar</button>
     </td>
 </tr>
 {% endfor %}
