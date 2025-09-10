@@ -215,15 +215,27 @@ app.controller("asistenciaspasesCtrl", function ($scope, $http) {
 })
 
 //Controlador para departamentos.
-app.controller("departamentosCtrl", function ($scoope, $http) {
-    console.log("Se ha iniciado DepartamentoCtrl)
-     function buscarDepartamentos() {
+app.controller("departamentosCtrl", function ($scope, $http) {
+    console.log("Se ha iniciado departamentosCtrl")
+
+    function buscarDepartamentos() {
         $.get("/tbodyDepartamentos", function (trsHTML) {
             $("#tbodyDepartamentos").html(trsHTML)
         })
     }
     buscarDepartamentos()
+
+    $(document).on("submit", "#frmDepartamento", function (event) {
+        event.preventDefault()
+        $.post("/departamento", $(this).serialize())
+        .done(function () {
+            buscarDepartamentos()
+            $("#frmDepartamento")[0].reset()
+            $("#idDepartamento").val("")
+        })
+    })
 })
+
 
 
 const DateTime = luxon.DateTime
