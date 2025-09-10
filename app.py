@@ -220,3 +220,25 @@ def tbodyDepartamentos():
     registros = cursor.fetchall()
     con.close()
     return render_template("tbodyDepartamentos.html", departamentos=registros)
+
+@app.route("/departamento", methods=["POST"])
+def guardarDepartamento():
+    if not con.is_connected():
+        con.reconnect()
+
+    idDepartamento     = request.form.get("idDepartamento", "")
+    nombreDepartamento = request.form["txtNombreDepartamento"]
+    edificio           = request.form["txtEdificio"]
+    descripcion        = request.form["txtDescripcion"]
+
+    cursor = con.cursor()
+
+    sql = """INSERT INTO departamento (NombreDepartamento, Edificio, Descripcion) 
+             VALUES (%s, %s, %s)"""
+    val = (nombreDepartamento, edificio, descripcion)
+
+    cursor.execute(sql, val)
+    con.commit()
+    con.close()
+    return make_response(jsonify({}))
+
