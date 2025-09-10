@@ -1,119 +1,103 @@
-# python.exe -m venv .venv
-# cd .venv/Scripts
-# activate.bat
-# py -m ensurepip --upgrade
-# pip install -r requirements.txt
-
-from flask import Flask
-from flask import render_template
-from flask import request
-from flask import jsonify, make_response
+from flask import Flask, render_template, request, jsonify, make_response, session, redirect, url_for
 import mysql.connector
 import datetime
 import pytz
-from flask_cors import CORS, cross_origin
-
-con = mysql.connector.connect(
-    host="185.232.14.52",
-    database="u760464709_23005019_bd",
-    user="u760464709_23005019_usr",
-    password="]0Pxl25["
-)
+from flask_cors import CORS
+import pusher
 
 app = Flask(__name__)
 CORS(app)
 
-def pusherAsistencias():
-    import pusher
-    
-    pusher_client = pusher.Pusher(
-      app_id="2046005",
-      key="e57a8ad0a9dc2e83d9a2",
-      secret="8a116dd9600a3b04a3a0",
-      cluster="us2",
-      ssl=True
+# Configuración de la base de datos
+db_config = {
+    "host": "185.232.14.52",
+    "database": "u760464709_23005019_bd",
+    "user": "u760464709_23005019_usr",
+    "password": "]0Pxl25["
+}
+
+def get_db_connection():
+    return mysql.connector.connect(**db_config)
+
+# Configuración de Pusher
+def get_pusher_client():
+    return pusher.Pusher(
+        app_id='2048531',
+        key='686124f7505c58418f23',
+        secret='b5add38751c68986fc11',
+        cluster='us2',
+        ssl=True
     )
-    
-    pusher_client.trigger("canalAsistencias", "eventoAsistencias", {"message": "Actualización de asistencias"})
-    return make_response(jsonify({}))
 
 @app.route("/")
 def index():
-    if not con.is_connected():
-        con.reconnect()
-    con.close()
     return render_template("index.html")
 
 @app.route("/app")
-def app2():
-    if not con.is_connected():
-        con.reconnect()
-    con.close()
+def app_route():
     return render_template("login.html")
 
 @app.route("/iniciarSesion", methods=["POST"])
 def iniciarSesion():
-    if not con.is_connected():
-        con.reconnect()
-
-    usuario    = request.form["txtUsuario"]
+    usuario = request.form["txtUsuario"]
     contrasena = request.form["txtContrasena"]
+    
+    # En un caso real, verificarías contra la base de datos
+    # Aquí un ejemplo simplificado
+    if usuario == "admin" and contrasena == "admin":
+        session['usuario'] = usuario
+        return make_response(jsonify([{'Id_Usuario': 1}]))
+    else:
+        return make_response(jsonify([]))
 
-    cursor = con.cursor(dictionary=True)
-    sql    = "SELECT 1 as valido FROM usuarios WHERE Nombre_Usuario = %s AND Contrasena = %s"
-    val    = (usuario, contrasena)
+@app.route("/cerrarSesion")
+def cerrarSesion():
+    session.pop('usuario', None)
+    return redirect(url_for('app_route'))
 
-    cursor.execute(sql, val)
-    registros = cursor.fetchall()
-    con.close()
-
-    return make_response(jsonify(registros))
-
-# ===== MÓDULO EMPLEADOS (Arquitectura N-capas) =====
+# Módulo de Empleados (Arquitectura en Capas)
 @app.route("/empleados")
 def empleados():
+    if 'usuario' not in session:
+        return redirect(url_for('app_route'))
     return render_template("empleados.html")
 
 @app.route("/tbodyEmpleados")
 def tbodyEmpleados():
-    if not con.is_connected():
-        con.reconnect()
-
-    cursor = con.cursor(dictionary=True)
-    sql    = """
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    sql = """
     SELECT idEmpleado, nombreEmpleado, numero, fechaIngreso
     FROM empleados
     ORDER BY idEmpleado DESC
-    LIMIT 10 OFFSET 0
     """
-
+    
     cursor.execute(sql)
     registros = cursor.fetchall()
     
+    # Formatear fechas
     for registro in registros:
-        if registro["fechaIngreso"]:
-            registro["fechaIngreso"] = registro["fechaIngreso"].strftime("%Y-%m-%d")
+        if registro['fechaIngreso']:
+            registro['fechaIngreso'] = registro['fechaIngreso'].strftime("%d/%m/%Y")
     
+    conn.close()
     return render_template("tbodyEmpleados.html", empleados=registros)
 
 @app.route("/empleado", methods=["POST"])
 def guardarEmpleado():
-    if not con.is_connected():
-        con.reconnect()
-
     id = request.form.get("id", "")
     nombre = request.form["nombre"]
     numero = request.form["numero"]
-    fecha_ingreso = request.form["fecha_ingreso"]
+    fecha_ingreso = request.form["fechaIngreso"]
     
-    cursor = con.cursor()
-
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
     if id:
         sql = """
         UPDATE empleados
-        SET nombreEmpleado = %s,
-            numero = %s,
-            fechaIngreso = %s
+        SET nombreEmpleado = %s, numero = %s, fechaIngreso = %s
         WHERE idEmpleado = %s
         """
         val = (nombre, numero, fecha_ingreso, id)
@@ -125,203 +109,204 @@ def guardarEmpleado():
         val = (nombre, numero, fecha_ingreso)
     
     cursor.execute(sql, val)
-    con.commit()
-    con.close()
-
+    conn.commit()
+    conn.close()
+    
+    # Notificar a los clientes via Pusher
+    pusher_client = get_pusher_client()
+    pusher_client.trigger("canalEmpleados", "eventoEmpleados", {"message": "Actualizar"})
+    
     return make_response(jsonify({"status": "success"}))
 
 @app.route("/empleado/<int:id>")
 def obtenerEmpleado(id):
-    if not con.is_connected():
-        con.reconnect()
-
-    cursor = con.cursor(dictionary=True)
-    sql = """
-    SELECT idEmpleado, nombreEmpleado, numero, fechaIngreso
-    FROM empleados
-    WHERE idEmpleado = %s
-    """
-    val = (id,)
-
-    cursor.execute(sql, val)
-    registro = cursor.fetchone()
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
     
-    if registro and registro["fechaIngreso"]:
-        registro["fechaIngreso"] = registro["fechaIngreso"].strftime("%Y-%m-%d")
+    sql = "SELECT * FROM empleados WHERE idEmpleado = %s"
+    cursor.execute(sql, (id,))
+    empleado = cursor.fetchone()
     
-    con.close()
-    return make_response(jsonify(registro))
+    if empleado and empleado['fechaIngreso']:
+        empleado['fechaIngreso'] = empleado['fechaIngreso'].strftime("%Y-%m-%d")
+    
+    conn.close()
+    return make_response(jsonify(empleado))
 
 @app.route("/empleado/eliminar", methods=["POST"])
 def eliminarEmpleado():
-    if not con.is_connected():
-        con.reconnect()
-
     id = request.form["id"]
-    cursor = con.cursor()
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
     sql = "DELETE FROM empleados WHERE idEmpleado = %s"
-    val = (id,)
-
-    cursor.execute(sql, val)
-    con.commit()
-    con.close()
-
+    cursor.execute(sql, (id,))
+    conn.commit()
+    conn.close()
+    
+    pusher_client = get_pusher_client()
+    pusher_client.trigger("canalEmpleados", "eventoEmpleados", {"message": "Actualizar"})
+    
     return make_response(jsonify({"status": "success"}))
 
-# ===== MÓDULO ASISTENCIAS (Arquitectura N-capas) =====
+# Módulo de Asistencias (Arquitectura Orientada a Servicios)
 @app.route("/asistencias")
 def asistencias():
+    if 'usuario' not in session:
+        return redirect(url_for('app_route'))
     return render_template("asistencias.html")
 
 @app.route("/tbodyAsistencias")
 def tbodyAsistencias():
-    if not con.is_connected():
-        con.reconnect()
-
-    cursor = con.cursor(dictionary=True)
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
     sql = """
-    SELECT idAsistencia, fecha, comentarios
-    FROM asistencias
-    ORDER BY fecha DESC, idAsistencia DESC
-    LIMIT 10 OFFSET 0
+    SELECT a.idAsistencia, a.fecha, a.comentarios,
+           COUNT(ap.idAsistenciaPase) as total_empleados,
+           SUM(CASE WHEN ap.estado = 'A' THEN 1 ELSE 0 END) as asistencias,
+           SUM(CASE WHEN ap.estado = 'R' THEN 1 ELSE 0 END) as retardos,
+           SUM(CASE WHEN ap.estado = 'F' THEN 1 ELSE 0 END) as faltas
+    FROM asistencias a
+    LEFT JOIN asistenciaspases ap ON a.idAsistencia = ap.idAsistencia
+    GROUP BY a.idAsistencia
+    ORDER BY a.fecha DESC
     """
-
+    
     cursor.execute(sql)
     registros = cursor.fetchall()
     
     for registro in registros:
-        if registro["fecha"]:
-            registro["fecha"] = registro["fecha"].strftime("%Y-%m-%d")
+        if registro['fecha']:
+            registro['fecha'] = registro['fecha'].strftime("%d/%m/%Y")
     
+    conn.close()
     return render_template("tbodyAsistencias.html", asistencias=registros)
 
 @app.route("/asistencia", methods=["POST"])
 def guardarAsistencia():
-    if not con.is_connected():
-        con.reconnect()
-
     fecha = request.form["fecha"]
     comentarios = request.form.get("comentarios", "")
     
-    cursor = con.cursor()
-    sql = """
-    INSERT INTO asistencias (fecha, comentarios)
-    VALUES (%s, %s)
-    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    sql = "INSERT INTO asistencias (fecha, comentarios) VALUES (%s, %s)"
     val = (fecha, comentarios)
     
     cursor.execute(sql, val)
-    con.commit()
-    con.close()
+    conn.commit()
+    asistencia_id = cursor.lastrowid
+    conn.close()
+    
+    # Obtener todos los empleados para crear registros en asistenciaspases
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT idEmpleado FROM empleados")
+    empleados = cursor.fetchall()
+    
+    for empleado in empleados:
+        cursor.execute(
+            "INSERT INTO asistenciaspases (idEmpleado, idAsistencia, estado) VALUES (%s, %s, %s)",
+            (empleado['idEmpleado'], asistencia_id, 'A')  # Por defecto 'A' (Asistencia)
+        )
+    
+    conn.commit()
+    conn.close()
+    
+    pusher_client = get_pusher_client()
+    pusher_client.trigger("canalAsistencias", "eventoAsistencias", {"message": "Actualizar"})
+    
+    return make_response(jsonify({"status": "success", "id": asistencia_id}))
 
-    pusherAsistencias()
+@app.route("/asistencia/<int:id>")
+def obtenerAsistencia(id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    sql = "SELECT * FROM asistencias WHERE idAsistencia = %s"
+    cursor.execute(sql, (id,))
+    asistencia = cursor.fetchone()
+    
+    if asistencia and asistencia['fecha']:
+        asistencia['fecha'] = asistencia['fecha'].strftime("%Y-%m-%d")
+    
+    conn.close()
+    return make_response(jsonify(asistencia))
+
+@app.route("/asistencia/eliminar", methods=["POST"])
+def eliminarAsistencia():
+    id = request.form["id"]
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Primero eliminar los registros relacionados en asistenciaspases
+    sql = "DELETE FROM asistenciaspases WHERE idAsistencia = %s"
+    cursor.execute(sql, (id,))
+    
+    # Luego eliminar la asistencia
+    sql = "DELETE FROM asistencias WHERE idAsistencia = %s"
+    cursor.execute(sql, (id,))
+    
+    conn.commit()
+    conn.close()
+    
+    pusher_client = get_pusher_client()
+    pusher_client.trigger("canalAsistencias", "eventoAsistencias", {"message": "Actualizar"})
+    
     return make_response(jsonify({"status": "success"}))
 
-# ===== MÓDULO ASISTENCIASPASES (Arquitectura N-capas) =====
-@app.route("/asistenciaspases")
-def asistenciaspases():
-    return render_template("asistenciaspases.html")
-
-@app.route("/tbodyAsistenciasPases")
-def tbodyAsistenciasPases():
-    if not con.is_connected():
-        con.reconnect()
-
-    cursor = con.cursor(dictionary=True)
+# Módulo de AsistenciasPases (Arquitectura Dirigida por Eventos)
+@app.route("/asistenciaspases/<int:id_asistencia>")
+def asistenciaspases(id_asistencia):
+    if 'usuario' not in session:
+        return redirect(url_for('app_route'))
+    
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    # Obtener información de la asistencia
+    sql = "SELECT * FROM asistencias WHERE idAsistencia = %s"
+    cursor.execute(sql, (id_asistencia,))
+    asistencia = cursor.fetchone()
+    
+    if asistencia and asistencia['fecha']:
+        asistencia['fecha'] = asistencia['fecha'].strftime("%d/%m/%Y")
+    
+    # Obtener los pases de asistencia
     sql = """
-    SELECT ap.idAsistenciaPase, e.nombreEmpleado, a.fecha, ap.estado
+    SELECT ap.*, e.nombreEmpleado, e.numero
     FROM asistenciaspases ap
     INNER JOIN empleados e ON ap.idEmpleado = e.idEmpleado
-    INNER JOIN asistencias a ON ap.idAsistencia = a.idAsistencia
-    ORDER BY a.fecha DESC, ap.idAsistenciaPase DESC
-    LIMIT 10 OFFSET 0
+    WHERE ap.idAsistencia = %s
+    ORDER BY e.nombreEmpleado
     """
-
-    cursor.execute(sql)
-    registros = cursor.fetchall()
+    cursor.execute(sql, (id_asistencia,))
+    pases = cursor.fetchall()
     
-    for registro in registros:
-        if registro["fecha"]:
-            registro["fecha"] = registro["fecha"].strftime("%Y-%m-%d")
+    conn.close()
     
-    return render_template("tbodyAsistenciasPases.html", asistenciaspases=registros)
+    return render_template("asistenciaspases.html", asistencia=asistencia, pases=pases)
 
-@app.route("/asistenciapase", methods=["POST"])
-def guardarAsistenciaPase():
-    if not con.is_connected():
-        con.reconnect()
-
-    id_empleado = request.form["id_empleado"]
-    id_asistencia = request.form["id_asistencia"]
+@app.route("/asistenciaspase", methods=["POST"])
+def actualizarAsistenciaPase():
+    id_pase = request.form["idPase"]
     estado = request.form["estado"]
     
-    cursor = con.cursor()
-    sql = """
-    INSERT INTO asistenciaspases (idEmpleado, idAsistencia, estado)
-    VALUES (%s, %s, %s)
-    """
-    val = (id_empleado, id_asistencia, estado)
+    conn = get_db_connection()
+    cursor = conn.cursor()
     
-    cursor.execute(sql, val)
-    con.commit()
-    con.close()
-
+    sql = "UPDATE asistenciaspases SET estado = %s WHERE idAsistenciaPase = %s"
+    cursor.execute(sql, (estado, id_pase))
+    conn.commit()
+    conn.close()
+    
+    pusher_client = get_pusher_client()
+    pusher_client.trigger("canalAsistenciasPases", "eventoAsistenciasPases", {"message": "Actualizar"})
+    
     return make_response(jsonify({"status": "success"}))
-
-# ===== MÓDULO REPORTES (Arquitectura Orientada a Servicios) =====
-class ReporteService:
-    def __init__(self, db_connection):
-        self.con = db_connection
-    
-    def obtener_reporte_asistencias(self, fecha_inicio, fecha_fin):
-        """Servicio para obtener reporte de asistencias por rango de fechas"""
-        if not self.con.is_connected():
-            self.con.reconnect()
-
-        cursor = self.con.cursor(dictionary=True)
-        sql = """
-        SELECT a.fecha, 
-               COUNT(ap.idAsistenciaPase) as total_registros,
-               SUM(CASE WHEN ap.estado = 'A' THEN 1 ELSE 0 END) as asistencias,
-               SUM(CASE WHEN ap.estado = 'R' THEN 1 ELSE 0 END) as retardos,
-               SUM(CASE WHEN ap.estado = 'F' THEN 1 ELSE 0 END) as faltas
-        FROM asistencias a
-        LEFT JOIN asistenciaspases ap ON a.idAsistencia = ap.idAsistencia
-        WHERE a.fecha BETWEEN %s AND %s
-        GROUP BY a.fecha
-        ORDER BY a.fecha
-        """
-        val = (fecha_inicio, fecha_fin)
-
-        cursor.execute(sql, val)
-        registros = cursor.fetchall()
-        
-        for registro in registros:
-            if registro["fecha"]:
-                registro["fecha"] = registro["fecha"].strftime("%Y-%m-%d")
-        
-        return registros
-
-# Instancia del servicio
-reporte_service = ReporteService(con)
-
-@app.route("/reportes")
-def reportes():
-    return render_template("reportes.html")
-
-@app.route("/reporte/asistencias", methods=["GET"])
-def generar_reporte_asistencias():
-    fecha_inicio = request.args.get("fecha_inicio")
-    fecha_fin = request.args.get("fecha_fin")
-    
-    if not fecha_inicio or not fecha_fin:
-        return make_response(jsonify({"error": "Fechas requeridas"}), 400)
-    
-    try:
-        reporte = reporte_service.obtener_reporte_asistencias(fecha_inicio, fecha_fin)
-        return make_response(jsonify(reporte))
-    except Exception as e:
-        return make_response(jsonify({"error": str(e)}), 500)
 
 if __name__ == "__main__":
     app.run(debug=True)
