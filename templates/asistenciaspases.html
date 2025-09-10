@@ -1,0 +1,54 @@
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h4 class="card-title mb-0">Registro de Asistencias por Empleado</h4>
+    </div>
+    <div class="card-body">
+        <form id="frmAsistenciaPase" method="post">
+            <div class="row">
+                <div class="col-md-3 mb-2">
+                    <label class="form-label">Empleado</label>
+                    <select class="form-select" id="selEmpleado" name="id_empleado" required>
+                        <option value="">Seleccionar...</option>
+                        {% for empleado in empleados %}
+                        <option value="{{ empleado.idEmpleado }}">{{ empleado.nombreEmpleado }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 mb-2">
+                    <label class="form-label">Asistencia</label>
+                    <select class="form-select" id="selAsistencia" name="id_asistencia" required>
+                        <option value="">Seleccionar...</option>
+                        {% for asistencia in asistencias %}
+                        <option value="{{ asistencia.idAsistencia }}">{{ asistencia.fecha }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 mb-2">
+                    <label class="form-label">Estado</label>
+                    <select class="form-select" id="selEstado" name="estado" required>
+                        <option value="A">Asistió</option>
+                        <option value="R">Retardo</option>
+                        <option value="F">Falta</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-2 d-flex align-items-end">
+                    <button class="btn btn-primary w-100">Registrar</button>
+                </div>
+            </div>
+        </form>
+
+        <div class="table-responsive mt-3">
+            <table class="table table-sm table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Empleado</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyAsistenciasPases"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
