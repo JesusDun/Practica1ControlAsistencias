@@ -1,72 +1,25 @@
-<div class="card">
-    <div class="card-header">
-        <h5>Registro de Asistencias</h5>
+<form id="frmAsistencia" method="post">
+    <div class="mb-1">
+        <label>Fecha</label>
+        <input type="date" class="form-control" id="txtFecha" name="fecha" required>
     </div>
-    <div class="card-body">
-        <form id="frmAsistencia" ng-submit="guardarAsistencia()">
-            <div class="row mb-3">
-                <div class="col-md-3">
-                    <label>Fecha</label>
-                    <input type="date" class="form-control" ng-model="nuevaAsistencia.fecha" required>
-                </div>
-                <div class="col-md-6">
-                    <label>Comentarios</label>
-                    <input type="text" class="form-control" ng-model="nuevaAsistencia.comentarios">
-                </div>
-                <div class="col-md-3">
-                    <label>&nbsp;</label>
-                    <button type="button" class="btn btn-info w-100" ng-click="agregarEmpleadoAsistencia()">
-                        Agregar Empleado
-                    </button>
-                </div>
-            </div>
-
-            <div class="mb-3" ng-repeat="emp in nuevaAsistencia.empleados track by $index">
-                <div class="row">
-                    <div class="col-md-5">
-                        <select class="form-control" ng-model="emp.idEmpleado" required>
-                            <option value="">Seleccionar empleado</option>
-                            <option ng-repeat="e in empleados" value="{{ e.idEmpleado }}">
-                                {{ e.nombreEmpleado }} ({{ e.numero }})
-                            </option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <select class="form-control" ng-model="emp.estado" required>
-                            <option value="A">Asistió</option>
-                            <option value="R">Retardo</option>
-                            <option value="F">Falta</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <button type="button" class="btn btn-danger w-100" ng-click="removerEmpleadoAsistencia($index)">
-                            Quitar
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="text-end">
-                <button type="submit" class="btn btn-primary" ng-disabled="nuevaAsistencia.empleados.length === 0">
-                    Guardar Asistencia
-                </button>
-            </div>
-        </form>
-
-        <hr>
-
-        <div class="table-responsive">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Fecha</th>
-                        <th>Comentarios</th>
-                        <th>Detalles</th>
-                    </tr>
-                </thead>
-                <tbody id="tbodyAsistencias"></tbody>
-            </table>
-        </div>
+    <div class="mb-1">
+        <label>Comentarios</label>
+        <textarea class="form-control" id="txtComentarios" name="comentarios"></textarea>
     </div>
+    <div class="mb-1 text-end">
+        <button class="btn btn-primary">Guardar</button>
+    </div>
+</form>
+<div class="table-responsive">
+    <table class="table table-sm">
+        <thead class="table-active">
+            <tr>
+                <th>Id</th>
+                <th>Fecha</th>
+                <th>Comentarios</th>
+            </tr>
+        </thead>
+        <tbody id="tbodyAsistencias"></tbody>
+    </table>
 </div>
