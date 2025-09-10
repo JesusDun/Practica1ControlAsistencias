@@ -1,23 +1,68 @@
 <div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="card-title mb-0">Registro de Asistencias</h5>
-        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalAsistencia">
-            <i class="bi bi-plus-circle"></i> Nueva Asistencia
-        </button>
+    <div class="card-header">
+        <h5>Registro de Asistencias</h5>
     </div>
     <div class="card-body">
+        <form id="frmAsistencia" ng-submit="guardarAsistencia()">
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label>Fecha</label>
+                    <input type="date" class="form-control" ng-model="nuevaAsistencia.fecha" required>
+                </div>
+                <div class="col-md-6">
+                    <label>Comentarios</label>
+                    <input type="text" class="form-control" ng-model="nuevaAsistencia.comentarios">
+                </div>
+                <div class="col-md-3">
+                    <label>&nbsp;</label>
+                    <button type="button" class="btn btn-info w-100" ng-click="agregarEmpleadoAsistencia()">
+                        Agregar Empleado
+                    </button>
+                </div>
+            </div>
+
+            <div class="mb-3" ng-repeat="emp in nuevaAsistencia.empleados track by $index">
+                <div class="row">
+                    <div class="col-md-5">
+                        <select class="form-control" ng-model="emp.idEmpleado" required>
+                            <option value="">Seleccionar empleado</option>
+                            <option ng-repeat="e in empleados" value="{{ e.idEmpleado }}">
+                                {{ e.nombreEmpleado }} ({{ e.numero }})
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-control" ng-model="emp.estado" required>
+                            <option value="A">Asistió</option>
+                            <option value="R">Retardo</option>
+                            <option value="F">Falta</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="button" class="btn btn-danger w-100" ng-click="removerEmpleadoAsistencia($index)">
+                            Quitar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-end">
+                <button type="submit" class="btn btn-primary" ng-disabled="nuevaAsistencia.empleados.length === 0">
+                    Guardar Asistencia
+                </button>
+            </div>
+        </form>
+
+        <hr>
+
         <div class="table-responsive">
-            <table class="table table-striped table-sm">
-                <thead class="table-dark">
+            <table class="table table-striped">
+                <thead>
                     <tr>
                         <th>ID</th>
                         <th>Fecha</th>
-                        <th>Total Empleados</th>
-                        <th>Asistencias</th>
-                        <th>Retardos</th>
-                        <th>Faltas</th>
                         <th>Comentarios</th>
-                        <th>Acciones</th>
+                        <th>Detalles</th>
                     </tr>
                 </thead>
                 <tbody id="tbodyAsistencias"></tbody>
@@ -25,71 +70,3 @@
         </div>
     </div>
 </div>
-
-<!-- Modal para nueva asistencia -->
-<div class="modal fade" id="modalAsistencia" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Nuevo Registro de Asistencia</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="frmAsistencia" method="post">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Fecha</label>
-                        <input type="date" class="form-control" name="fecha" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Comentarios</label>
-                        <textarea class="form-control" name="comentarios" rows="3"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<script>
-$(document).ready(function() {
-    cargarAsistencias();
-    
-    $("#frmAsistencia").submit(function(e) {
-        e.preventDefault();
-        
-        $.post("/asistencia", $(this).serialize(), function(response) {
-            if (response.status === "success") {
-                $("#modalAsistencia").modal("hide");
-                cargarAsistencias();
-                toast("Asistencia registrada correctamente");
-                
-                // Redirigir a la gestión de pases de asistencia
-                setTimeout(function() {
-                    window.location.href = "#/asistenciaspases/" + response.id;
-                }, 1000);
-            }
-        });
-    });
-});
-
-function cargarAsistencias() {
-    $.get("/tbodyAsistencias", function(data) {
-        $("#tbodyAsistencias").html(data);
-    });
-}
-
-function eliminarAsistencia(id) {
-    if (confirm("¿Está seguro de eliminar este registro de asistencia? También se eliminarán todos los registros asociados.")) {
-        $.post("/asistencia/eliminar", {id: id}, function(response) {
-            if (response.status === "success") {
-                cargarAsistencias();
-                toast("Asistencia eliminada correctamente");
-            }
-        });
-    }
-}
-</script>
