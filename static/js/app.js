@@ -29,6 +29,10 @@ app.config(function ($routeProvider, $locationProvider) {
         templateUrl: "/asistenciaspases",
         controller: "asistenciaspasesCtrl"
     })
+    .when("/departamentos", {
+        templateUrl: "/departamentos",
+        controller: "departamentosCtrl"
+    })
     .otherwise({
         redirectTo: "/"
     })
@@ -155,6 +159,13 @@ app.controller("asistenciaspasesCtrl", function ($scope, $http) {
         }
     })
 })
+//Controlador para departamentos.
+app.controller("departamentosCtrl", function ($scoope, $http) {
+    function buscarDepartamentos() {
+    }
+    buscarDepartamentos()
+})
+
 
 const DateTime = luxon.DateTime
 let lxFechaHora
