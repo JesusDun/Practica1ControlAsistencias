@@ -108,8 +108,27 @@ app.controller("empleadosCtrl", function ($scope, $http) {
         $.post("/empleado", $(this).serialize())
         .done(function() {
             buscarEmpleados();
+            $("#frmEmpleado")[0].reset(); // Limpia el formulario
+            $("#idEmpleado").val(""); // Asegura que el ID oculto se limpie
         })
     })
+
+    // MODIFICACIÓN: Se añade la lógica para el botón de editar.
+    $(document).on("click", ".btn-editar-empleado", function () {
+        // Se obtienen todos los datos del botón
+        const id = $(this).data("id");
+        const nombre = $(this).data("nombre");
+        const numero = $(this).data("numero");
+        const fecha = $(this).data("fecha");
+        const idDepartamento = $(this).data("iddepartamento");
+
+        // Se llenan los campos del formulario con los datos obtenidos
+        $("#idEmpleado").val(id);
+        $("#txtNombreEmpleado").val(nombre);
+        $("#txtNumero").val(numero);
+        $("#txtFechaIngreso").val(fecha);
+        $("#txtIdDepartamento").val(idDepartamento);
+    });
 })
 
 // Controlador para Asistencias (Dirigida por Eventos)
