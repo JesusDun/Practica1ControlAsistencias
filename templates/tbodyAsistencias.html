@@ -2,18 +2,7 @@
 <tr>
     <td>{{ asistencia.idAsistencia }}</td>
     <td>{{ asistencia.fecha }}</td>
-    <td>{{ asistencia.total_empleados }}</td>
-    <td class="text-success">{{ asistencia.asistencias }}</td>
-    <td class="text-warning">{{ asistencia.retardos }}</td>
-    <td class="text-danger">{{ asistencia.faltas }}</td>
-    <td>{{ asistencia.comentarios|default('', true) }}</td>
-    <td>
-        <a href="#/asistenciaspases/{{ asistencia.idAsistencia }}" class="btn btn-sm btn-info">
-            <i class="bi bi-people"></i> Gestionar
-        </a>
-        <button class="btn btn-sm btn-danger" onclick="eliminarAsistencia({{ asistencia.idAsistencia }})">
-            <i class="bi bi-trash"></i>
-        </button>
-    </td>
+    <td>{{ asistencia.comentarios }}</td>
+    <td>{{ asistencia.detalles }}</td>
 </tr>
 {% endfor %}
