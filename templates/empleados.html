@@ -1,32 +1,39 @@
 <div class="card">
     <div class="card-header">
-        <h5 class="card-title">Gestión de Empleados</h5>
+        <h5>Gestión de Empleados</h5>
     </div>
     <div class="card-body">
-        <form id="frmEmpleado" method="post">
-            <input type="hidden" id="txtId" name="id" value="">
+        <form id="frmEmpleado" ng-submit="guardarEmpleado()">
             <div class="row mb-3">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label>Nombre</label>
-                    <input type="text" class="form-control" id="txtNombre" name="nombre" required>
+                    <input type="text" class="form-control" ng-model="nuevoEmpleado.nombre" required>
                 </div>
                 <div class="col-md-3">
                     <label>Número</label>
-                    <input type="number" class="form-control" id="txtNumero" name="numero" required>
+                    <input type="number" class="form-control" ng-model="nuevoEmpleado.numero" required>
                 </div>
                 <div class="col-md-3">
                     <label>Fecha de Ingreso</label>
-                    <input type="date" class="form-control" id="txtFechaIngreso" name="fechaIngreso" required>
+                    <input type="date" class="form-control" ng-model="nuevoEmpleado.fechaIngreso" required>
                 </div>
-                <div class="col-md-2 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary">Guardar</button>
+                <div class="col-md-3">
+                    <label>&nbsp;</label>
+                    <div>
+                        <button type="submit" class="btn btn-primary me-2">
+                            {{ empleadoEditando ? 'Actualizar' : 'Guardar' }}
+                        </button>
+                        <button type="button" ng-if="empleadoEditando" class="btn btn-secondary" ng-click="cancelarEdicion()">
+                            Cancelar
+                        </button>
+                    </div>
                 </div>
             </div>
         </form>
-        
+
         <div class="table-responsive">
-            <table class="table table-striped table-sm">
-                <thead class="table-dark">
+            <table class="table table-striped">
+                <thead>
                     <tr>
                         <th>ID</th>
                         <th>Nombre</th>
@@ -40,48 +47,3 @@
         </div>
     </div>
 </div>
-
-<script>
-$(document).ready(function() {
-    cargarEmpleados();
-    
-    $("#frmEmpleado").submit(function(e) {
-        e.preventDefault();
-        
-        $.post("/empleado", $(this).serialize(), function(response) {
-            if (response.status === "success") {
-                $("#frmEmpleado")[0].reset();
-                $("#txtId").val("");
-                cargarEmpleados();
-                toast("Empleado guardado correctamente");
-            }
-        });
-    });
-});
-
-function cargarEmpleados() {
-    $.get("/tbodyEmpleados", function(data) {
-        $("#tbodyEmpleados").html(data);
-    });
-}
-
-function editarEmpleado(id) {
-    $.get("/empleado/" + id, function(empleado) {
-        $("#txtId").val(empleado.idEmpleado);
-        $("#txtNombre").val(empleado.nombreEmpleado);
-        $("#txtNumero").val(empleado.numero);
-        $("#txtFechaIngreso").val(empleado.fechaIngreso);
-    });
-}
-
-function eliminarEmpleado(id) {
-    if (confirm("¿Está seguro de eliminar este empleado?")) {
-        $.post("/empleado/eliminar", {id: id}, function(response) {
-            if (response.status === "success") {
-                cargarEmpleados();
-                toast("Empleado eliminado correctamente");
-            }
-        });
-    }
-}
-</script>
