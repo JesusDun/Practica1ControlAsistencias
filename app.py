@@ -1,3 +1,9 @@
+# python.exe -m venv .venv
+# cd .venv/Scripts
+# activate.bat
+# py -m ensurepip --upgrade
+# pip install -r requirements.txt
+
 from flask import Flask, render_template, request, jsonify, make_response
 import mysql.connector
 from flask_cors import CORS, cross_origin
