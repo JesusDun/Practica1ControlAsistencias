@@ -1,49 +1,32 @@
-<div class="card">
-    <div class="card-header">
-        <h5>Gestión de Empleados</h5>
+<form id="frmEmpleado" method="post">
+    <input type="hidden" id="idEmpleado" name="idEmpleado">
+    <div class="mb-1">
+        <label>Nombre del Empleado</label>
+        <input type="text" class="form-control" id="txtNombreEmpleado" name="nombreEmpleado" required>
     </div>
-    <div class="card-body">
-        <form id="frmEmpleado" ng-submit="guardarEmpleado()">
-            <div class="row mb-3">
-                <div class="col-md-3">
-                    <label>Nombre</label>
-                    <input type="text" class="form-control" ng-model="nuevoEmpleado.nombre" required>
-                </div>
-                <div class="col-md-3">
-                    <label>Número</label>
-                    <input type="number" class="form-control" ng-model="nuevoEmpleado.numero" required>
-                </div>
-                <div class="col-md-3">
-                    <label>Fecha de Ingreso</label>
-                    <input type="date" class="form-control" ng-model="nuevoEmpleado.fechaIngreso" required>
-                </div>
-                <div class="col-md-3">
-                    <label>&nbsp;</label>
-                    <div>
-                        <button type="submit" class="btn btn-primary me-2">
-                            {{ empleadoEditando ? 'Actualizar' : 'Guardar' }}
-                        </button>
-                        <button type="button" ng-if="empleadoEditando" class="btn btn-secondary" ng-click="cancelarEdicion()">
-                            Cancelar
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </form>
-
-        <div class="table-responsive">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nombre</th>
-                        <th>Número</th>
-                        <th>Fecha Ingreso</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="tbodyEmpleados"></tbody>
-            </table>
-        </div>
+    <div class="mb-1">
+        <label>Número</label>
+        <input type="number" class="form-control" id="txtNumero" name="numero" required>
     </div>
+    <div class="mb-1">
+        <label>Fecha de Ingreso</label>
+        <input type="date" class="form-control" id="txtFechaIngreso" name="fechaIngreso" required>
+    </div>
+    <div class="mb-1 text-end">
+        <button class="btn btn-primary">Guardar</button>
+    </div>
+</form>
+<div class="table-responsive">
+    <table class="table table-sm">
+        <thead class="table-active">
+            <tr>
+                <th>Id</th>
+                <th>Nombre</th>
+                <th>Número</th>
+                <th>Fecha de Ingreso</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody id="tbodyEmpleados"></tbody>
+    </table>
 </div>
