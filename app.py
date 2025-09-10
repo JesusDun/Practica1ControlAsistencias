@@ -69,47 +69,49 @@ def iniciarSesion():
 # =========================================================================
 
 @app.route("/empleados")
-def empleados():
-    return render_template("empleados.html")
+    def empleados():
+        return render_template("empleados.html")
 
 @app.route("/tbodyEmpleados")
-def tbodyEmpleados():
-    if not con.is_connected():
-        con.reconnect()
-
-    cursor = con.cursor(dictionary=True)
-    # READ (LECTURA)
-    sql    = "SELECT idEmpleado, nombreEmpleado, numero, fechaIngreso FROM empleados ORDER BY idEmpleado DESC"
-    cursor.execute(sql)
-    registros = cursor.fetchall()
-    con.close()
-    return render_template("tbodyEmpleados.html", empleados=registros)
+    def tbodyEmpleados():
+        if not con.is_connected():
+            con.reconnect()
+    
+        cursor = con.cursor(dictionary=True)
+        # MODIFICACIÓN: Se añade 'idDepartamento' a la consulta SELECT.
+        sql    = "SELECT idEmpleado, nombreEmpleado, numero, fechaIngreso, idDepartamento FROM empleados ORDER BY idEmpleado DESC"
+        cursor.execute(sql)
+        registros = cursor.fetchall()
+        con.close()
+        return render_template("tbodyEmpleados.html", empleados=registros)
 
 @app.route("/empleado", methods=["POST"])
-def guardarEmpleado():
-    if not con.is_connected():
-        con.reconnect()
-
-    idEmpleado   = request.form.get("idEmpleado", "") # Obtiene ID o cadena vacía si es nuevo
-    nombreEmpleado = request.form["nombreEmpleado"]
-    numero     = request.form["numero"]
-    fechaIngreso   = request.form["fechaIngreso"]
+    def guardarEmpleado():
+        if not con.is_connected():
+            con.reconnect()
     
-    cursor = con.cursor()
-
-    if idEmpleado:
-        # UPDATE (ACTUALIZAR)
-        sql = "UPDATE empleados SET nombreEmpleado = %s, numero = %s, fechaIngreso = %s WHERE idEmpleado = %s"
-        val = (nombreEmpleado, numero, fechaIngreso, idEmpleado)
-    else:
-        # CREATE (CREAR)
-        sql = "INSERT INTO empleados (nombreEmpleado, numero, fechaIngreso) VALUES (%s, %s, %s)"
-        val = (nombreEmpleado, numero, fechaIngreso)
+        idEmpleado     = request.form.get("idEmpleado", "")
+        nombreEmpleado = request.form["nombreEmpleado"]
+        numero         = request.form["numero"]
+        fechaIngreso   = request.form["fechaIngreso"]
+        # MODIFICACIÓN: Se obtiene el nuevo campo 'idDepartamento' del formulario.
+        idDepartamento = request.form["idDepartamento"]
+        
+        cursor = con.cursor()
     
-    cursor.execute(sql, val)
-    con.commit()
-    con.close()
-    return make_response(jsonify({}))
+        if idEmpleado:
+            # MODIFICACIÓN: Se actualiza también el 'idDepartamento' en el UPDATE.
+            sql = "UPDATE empleados SET nombreEmpleado = %s, numero = %s, fechaIngreso = %s, idDepartamento = %s WHERE idEmpleado = %s"
+            val = (nombreEmpleado, numero, fechaIngreso, idDepartamento, idEmpleado)
+        else:
+            # MODIFICACIÓN: Se añade 'idDepartamento' al INSERT.
+            sql = "INSERT INTO empleados (nombreEmpleado, numero, fechaIngreso, idDepartamento) VALUES (%s, %s, %s, %s)"
+            val = (nombreEmpleado, numero, fechaIngreso, idDepartamento)
+        
+        cursor.execute(sql, val)
+        con.commit()
+        con.close()
+        return make_response(jsonify({}))
 
 # =========================================================================
 # MÓDULO ASISTENCIAS (Dirigida por Eventos)
