@@ -1,0 +1,7 @@
+{% for asistencia in asistencias %}
+<tr>
+    <td>{{ asistencia.idAsistencia }}</td>
+    <td>{{ asistencia.fecha }}</td>
+    <td>{{ asistencia.comentarios }}</td>
+</tr>
+{% endfor %}
