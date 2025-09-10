@@ -138,6 +138,8 @@ app.controller("asistenciasCtrl", function ($scope, $http) {
         $.post("/asistencia", $(this).serialize())
     })
 
+
+    // Botón de Editar
     $(document).on("click", ".btn-editar-asistencia", function () {
     const id = $(this).data("id")
     const fecha = $(this).data("fecha")
@@ -151,6 +153,23 @@ app.controller("asistenciasCtrl", function ($scope, $http) {
         $("#frmAsistencia").append(`<input type="hidden" id="hiddenId" name="id">`)
     }
     $("#hiddenId").val(id)
+
+
+        // este ayuda a distinguir entre "crear" y "editar"
+        $(document).on("submit", "#frmAsistencia", function (event) {
+    event.preventDefault()
+
+    const id = $("#hiddenId").val()
+    const url = id ? "/asistencia/editar" : "/asistencia"
+
+    $.post(url, $(this).serialize())
+        .done(function () {
+            buscarAsistencias()
+            $("#frmAsistencia")[0].reset()
+            $("#hiddenId").remove() // Limpia el estado de edición
+        })
+})
+
 })
 
 })
