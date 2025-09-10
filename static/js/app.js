@@ -25,9 +25,9 @@ app.config(function ($routeProvider, $locationProvider) {
         templateUrl: "/asistencias",
         controller: "asistenciasCtrl"
     })
-    .when("/reportes", {
-        templateUrl: "/reportes",
-        controller: "reportesCtrl"
+    .when("/asistenciaspases", {
+        templateUrl: "/asistenciaspases",
+        controller: "asistenciaspasesCtrl"
     })
     .otherwise({
         redirectTo: "/"
@@ -35,6 +35,7 @@ app.config(function ($routeProvider, $locationProvider) {
 })
 
 app.run(["$rootScope", "$location", "$timeout", function($rootScope, $location, $timeout) {
+    // ... Código del profesor para fecha/hora y animaciones (sin cambios) ...
     function actualizarFechaHora() {
         lxFechaHora = DateTime
         .now()
@@ -45,8 +46,6 @@ app.run(["$rootScope", "$location", "$timeout", function($rootScope, $location, 
     }
 
     $rootScope.slide = ""
-    $rootScope.usuarioLogueado = false
-    $rootScope.nombreUsuario = ""
 
     actualizarFechaHora()
 
@@ -66,6 +65,7 @@ app.run(["$rootScope", "$location", "$timeout", function($rootScope, $location, 
 
             $timeout(function () {
                 $("html").css("overflow-x", "auto")
+
                 $rootScope.slide = ""
             }, 1000)
 
@@ -74,190 +74,86 @@ app.run(["$rootScope", "$location", "$timeout", function($rootScope, $location, 
     })
 }])
 
-app.controller("appCtrl", function ($scope, $http, $rootScope) {
-    // Verificar si ya está logueado
-    if (localStorage.getItem('user_id')) {
-        $rootScope.usuarioLogueado = true
-        $rootScope.nombreUsuario = localStorage.getItem('user_name')
-        window.location = "/#/empleados"
-    }
-
+// Controlador para Login
+app.controller("appCtrl", function ($scope, $http) {
     $("#frmInicioSesion").submit(function (event) {
         event.preventDefault()
         $.post("iniciarSesion", $(this).serialize(), function (respuesta) {
-            if (respuesta.success) {
-                localStorage.setItem('user_id', respuesta.user.idEmpleado)
-                localStorage.setItem('user_name', respuesta.user.nombreEmpleado)
-                $rootScope.$apply(function() {
-                    $rootScope.usuarioLogueado = true
-                    $rootScope.nombreUsuario = respuesta.user.nombreEmpleado
-                })
-                window.location = "/#/empleados"
-            } else {
-                alert("Usuario y/o Contraseña Incorrecto(s)")
+            if (respuesta.length) {
+                alert("Iniciaste Sesión")
+                window.location = "/#/empleados" // Redirige a Empleados
+                return
             }
+            alert("Usuario y/o Contraseña Incorrecto(s)")
         })
     })
-
-    $scope.cerrarSesion = function() {
-        localStorage.removeItem('user_id')
-        localStorage.removeItem('user_name')
-        $rootScope.usuarioLogueado = false
-        $rootScope.nombreUsuario = ""
-        window.location = "/#/"
-    }
 })
 
+// Controlador para Empleados (N Capas)
 app.controller("empleadosCtrl", function ($scope, $http) {
-    $scope.empleados = []
-    $scope.nuevoEmpleado = {}
-    $scope.empleadoEditando = null
-
-    function cargarEmpleados() {
+    function buscarEmpleados() {
         $.get("/tbodyEmpleados", function (trsHTML) {
             $("#tbodyEmpleados").html(trsHTML)
         })
     }
+    buscarEmpleados()
 
-    cargarEmpleados()
-    
-    // Configurar Pusher para actualizaciones en tiempo real
-    Pusher.logToConsole = true
-    var pusher = new Pusher("686124f7505c58418f23", {
-      cluster: "us2"
-    })
-
-    var channel = pusher.subscribe("canal-empleados")
-    channel.bind("evento-empleados", function(data) {
-        cargarEmpleados()
-    })
-
-    $scope.guardarEmpleado = function() {
-        $.post("/empleado", {
-            id: $scope.empleadoEditando ? $scope.empleadoEditando.idEmpleado : "",
-            nombre: $scope.nuevoEmpleado.nombre,
-            numero: $scope.nuevoEmpleado.numero,
-            fechaIngreso: $scope.nuevoEmpleado.fechaIngreso
-        }).done(function() {
-            cargarEmpleados()
-            $scope.nuevoEmpleado = {}
-            $scope.empleadoEditando = null
-            $scope.$apply()
+    $(document).on("submit", "#frmEmpleado", function (event) {
+        event.preventDefault()
+        // CREATE/UPDATE
+        $.post("/empleado", $(this).serialize())
+        .done(function() {
+            buscarEmpleados();
         })
-    }
-
-    $scope.editarEmpleado = function(id) {
-        $.get(`/empleado/${id}`, function(empleado) {
-            $scope.empleadoEditando = empleado
-            $scope.nuevoEmpleado = {
-                nombre: empleado.nombreEmpleado,
-                numero: empleado.numero,
-                fechaIngreso: new Date(empleado.fechaIngreso).toISOString().split('T')[0]
-            }
-            $scope.$apply()
-        })
-    }
-
-    $scope.eliminarEmpleado = function(id) {
-        if (confirm("¿Estás seguro de eliminar este empleado?")) {
-            $.post("/empleado/eliminar", {id: id}, function() {
-                cargarEmpleados()
-            })
-        }
-    }
-
-    $scope.cancelarEdicion = function() {
-        $scope.empleadoEditando = null
-        $scope.nuevoEmpleado = {}
-    }
+    })
 })
 
+// Controlador para Asistencias (Dirigida por Eventos)
 app.controller("asistenciasCtrl", function ($scope, $http) {
-    $scope.asistencias = []
-    $scope.nuevaAsistencia = {
-        fecha: new Date().toISOString().split('T')[0],
-        comentarios: '',
-        empleados: []
-    }
-    $scope.empleados = []
-
-    function cargarAsistencias() {
+    function buscarAsistencias() {
         $.get("/tbodyAsistencias", function (trsHTML) {
             $("#tbodyAsistencias").html(trsHTML)
         })
     }
+    buscarAsistencias()
+    
+    // Configuración de Pusher
+    Pusher.logToConsole = true
+    var pusher = new Pusher("686124f7505c58418f23", { // Tu KEY
+      cluster: "us2"
+    })
+    var channel = pusher.subscribe("canalAsistencias")
+    // Consumidor del evento: Llama a la función de búsqueda cuando hay un evento
+    channel.bind("eventoAsistencias", function(data) {
+        buscarAsistencias()
+    })
 
-    function cargarEmpleados() {
-        $.get("/empleados", function (data) {
-            $scope.empleados = data
-            $scope.$apply()
-        })
-    }
-
-    cargarAsistencias()
-    cargarEmpleados()
-
-    $scope.agregarEmpleadoAsistencia = function() {
-        $scope.nuevaAsistencia.empleados.push({
-            idEmpleado: null,
-            estado: 'A'
-        })
-    }
-
-    $scope.removerEmpleadoAsistencia = function(index) {
-        $scope.nuevaAsistencia.empleados.splice(index, 1)
-    }
-
-    $scope.guardarAsistencia = function() {
-        const formData = new FormData()
-        formData.append('fecha', $scope.nuevaAsistencia.fecha)
-        formData.append('comentarios', $scope.nuevaAsistencia.comentarios)
-        
-        $scope.nuevaAsistencia.empleados.forEach((emp, index) => {
-            if (emp.idEmpleado) {
-                formData.append('empleados[]', emp.idEmpleado)
-                formData.append('estados[]', emp.estado)
-            }
-        })
-
-        $.ajax({
-            url: '/asistencia',
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function() {
-                cargarAsistencias()
-                $scope.nuevaAsistencia = {
-                    fecha: new Date().toISOString().split('T')[0],
-                    comentarios: '',
-                    empleados: []
-                }
-                $scope.$apply()
-                alert('Asistencia registrada correctamente')
-            }
-        })
-    }
+    $(document).on("submit", "#frmAsistencia", function (event) {
+        event.preventDefault()
+        // CREATE
+        $.post("/asistencia", $(this).serialize())
+    })
 })
 
-app.controller("reportesCtrl", function ($scope, $http) {
-    $scope.reporte = {
-        tipo: 'asistencias',
-        fechaInicio: new Date().toISOString().split('T')[0],
-        fechaFin: new Date().toISOString().split('T')[0]
-    }
-    $scope.resultados = []
-
-    $scope.generarReporte = function() {
-        $.post("/generarReporte", $scope.reporte, function(data) {
-            $scope.resultados = data
-            $scope.$apply()
+// Controlador para AsistenciasPases (N Capas)
+app.controller("asistenciaspasesCtrl", function ($scope, $http) {
+    function buscarAsistenciasPases() {
+        $.get("/tbodyAsistenciasPases", function (trsHTML) {
+            $("#tbodyAsistenciasPases").html(trsHTML)
         })
     }
+    buscarAsistenciasPases()
 
-    $scope.exportarPDF = function() {
-        alert('Funcionalidad de exportación a PDF será implementada próximamente')
-    }
+    $(document).on("click", ".btn-eliminar-pase", function (event) {
+        const id = $(this).data("id")
+        // DELETE (ELIMINAR)
+        if (confirm(`¿Estás seguro de eliminar el pase #${id}?`)) {
+            $.post("/asistenciapase/eliminar", { id: id })
+            .done(function() {
+                buscarAsistenciasPases();
+            })
+        }
+    })
 })
 
 const DateTime = luxon.DateTime
@@ -272,6 +168,5 @@ document.addEventListener("DOMContentLoaded", function (event) {
         altFormat: "d/F/Y",
         dateFormat: "Y-m-d",
     }
-
     activeMenuOption(location.hash)
 })
