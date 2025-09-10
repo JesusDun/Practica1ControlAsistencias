@@ -1,9 +1,73 @@
+# python.exe -m venv .venv
+# cd .venv/Scripts
+# activate.bat
+# py -m ensurepip --upgrade
+# pip install -r requirements.txt
+
+from flask import Flask
+from flask import render_template
+from flask import request
+from flask import jsonify, make_response
+import mysql.connector
+import datetime
+import pytz
+from flask_cors import CORS, cross_origin
+
 con = mysql.connector.connect(
     host="185.232.14.52",
     database="u760464709_23005019_bd",
     user="u760464709_23005019_usr",
     password="]0Pxl25["
 )
+
+app = Flask(__name__)
+CORS(app)
+
+def pusherAsistencias():
+    import pusher
+    
+    pusher_client = pusher.Pusher(
+      app_id="2046005",
+      key="e57a8ad0a9dc2e83d9a2",
+      secret="8a116dd9600a3b04a3a0",
+      cluster="us2",
+      ssl=True
+    )
+    
+    pusher_client.trigger("canalAsistencias", "eventoAsistencias", {"message": "Actualización de asistencias"})
+    return make_response(jsonify({}))
+
+@app.route("/")
+def index():
+    if not con.is_connected():
+        con.reconnect()
+    con.close()
+    return render_template("index.html")
+
+@app.route("/app")
+def app2():
+    if not con.is_connected():
+        con.reconnect()
+    con.close()
+    return render_template("login.html")
+
+@app.route("/iniciarSesion", methods=["POST"])
+def iniciarSesion():
+    if not con.is_connected():
+        con.reconnect()
+
+    usuario    = request.form["txtUsuario"]
+    contrasena = request.form["txtContrasena"]
+
+    cursor = con.cursor(dictionary=True)
+    sql    = "SELECT 1 as valido FROM usuarios WHERE Nombre_Usuario = %s AND Contrasena = %s"
+    val    = (usuario, contrasena)
+
+    cursor.execute(sql, val)
+    registros = cursor.fetchall()
+    con.close()
+
+    return make_response(jsonify(registros))
 
 # ===== MÓDULO EMPLEADOS (Arquitectura N-capas) =====
 @app.route("/empleados")
@@ -16,7 +80,7 @@ def tbodyEmpleados():
         con.reconnect()
 
     cursor = con.cursor(dictionary=True)
-    sql = """
+    sql    = """
     SELECT idEmpleado, nombreEmpleado, numero, fechaIngreso
     FROM empleados
     ORDER BY idEmpleado DESC
@@ -26,7 +90,6 @@ def tbodyEmpleados():
     cursor.execute(sql)
     registros = cursor.fetchall()
     
-    # Formatear fechas
     for registro in registros:
         if registro["fechaIngreso"]:
             registro["fechaIngreso"] = registro["fechaIngreso"].strftime("%Y-%m-%d")
@@ -151,6 +214,7 @@ def guardarAsistencia():
     con.commit()
     con.close()
 
+    pusherAsistencias()
     return make_response(jsonify({"status": "success"}))
 
 # ===== MÓDULO ASISTENCIASPASES (Arquitectura N-capas) =====
@@ -258,3 +322,6 @@ def generar_reporte_asistencias():
         return make_response(jsonify(reporte))
     except Exception as e:
         return make_response(jsonify({"error": str(e)}), 500)
+
+if __name__ == "__main__":
+    app.run(debug=True)
