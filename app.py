@@ -211,6 +211,7 @@ def departamentos():
 @app.route("/tbodyDepartamentos")
 def tbodyDepartamentos():
     try:
+        con = mysql.connector.connect(**db_config)
         if not con.is_connected():
             con.reconnect()
 
