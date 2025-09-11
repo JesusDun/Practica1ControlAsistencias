@@ -191,7 +191,6 @@ app.controller("asistenciasCtrl", function ($scope, $http) {
 
 })
 
-})
 
 // Controlador para AsistenciasPases (N Capas)
 app.controller("asistenciaspasesCtrl", function ($scope, $http) {
