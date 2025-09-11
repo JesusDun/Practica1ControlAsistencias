@@ -226,16 +226,15 @@ def departamentos():
 
 @app.route("/tbodyDepartamentos")
 def tbodyDepartamentos():
-    try:
-        if not con.is_connected():
-            con.reconnect()
+    con = mysql.connector.connect(**db_config)
+    cursor = con.cursor(dictionary=True)
 
-        cursor = con.cursor(dictionary=True)
-        sql    = "SELECT idDepartamento, NombreDepartamento, Edificio, Descripcion FROM departamento ORDER BY idDepartamento DESC"
-        cursor.execute(sql)
-        registros = cursor.fetchall()
-        con.close()
-        return render_template("tbodyDepartamentos.html", departamentos=registros)
-    except Exception as e:
-        return f"Error en la peticion de la tabla /tbodyDepartamentos: {str(e)}", 500
+    sql    = "SELECT idDepartamento, NombreDepartamento, Edificio, Descripcion FROM departamento ORDER BY idDepartamento DESC"
+    cursor.execute(sql)
+    registros = cursor.fetchall()
+
+    cursor.close()
+    con.close()
+    
+    return render_template("tbodyDepartamentos.html", departamentos=registros)
 
