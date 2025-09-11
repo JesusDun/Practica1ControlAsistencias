@@ -188,7 +188,7 @@ app.controller("asistenciasCtrl", function ($scope, $http) {
             $("#hiddenId").remove() // Limpia el estado de edición
         })
 })
-
+})
 })
 
 
