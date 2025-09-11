@@ -5,35 +5,31 @@
 # pip install -r requirements.txt
 
 from flask import Flask, render_template, request, jsonify, make_response
-
 import mysql.connector
-import pytz
-
 from flask_cors import CORS, cross_origin
 import pusher
 
-# CONEXIÓN A LA BASE DE DATOS (Tus Credenciales)
-con = mysql.connector.connect(
-    host="185.232.14.52",
-    database="u760464709_23005019_bd",
-    user="u760464709_23005019_usr",
-    password="]0Pxl25["
-)
+# Configuración de la base de datos
+db_config = {
+    "host": "185.232.14.52",
+    "database": "u760464709_23005019_bd",
+    "user": "u760464709_23005019_usr",
+    "password": "]0Pxl25["
+}
 
 app = Flask(__name__)
 CORS(app)
 
-# CONFIGURACIÓN DE PUSHER (Tus Credenciales)
+# CONFIGURACIÓN DE PUSHER
 pusher_client = pusher.Pusher(
-    app_id='2048531',  # Tu APP_ID
-    key='686124f7505c58418f23',    # Tu KEY
-    secret='b5add38751c68986fc11',  # Tu SECRET
+    app_id='2048531',
+    key='686124f7505c58418f23',
+    secret='b5add38751c68986fc11',
     cluster='us2',
     ssl=True
 )
 
 def pusherAsistencias():
-    # Función para notificar cambios en Asistencias (Arquitectura Dirigida por Eventos)
     pusher_client.trigger("canalAsistencias", "eventoAsistencias", {"message": "Nueva asistencia registrada."})
     return make_response(jsonify({}))
 
@@ -43,87 +39,81 @@ def pusherAsistencias():
 
 @app.route("/")
 def index():
-    if not con.is_connected():
-        con.reconnect()
-    con.close()
     return render_template("index.html")
 
 @app.route("/app")
 def app2():
-    if not con.is_connected():
-        con.reconnect()
-    con.close()
     return render_template("login.html")
 
 @app.route("/iniciarSesion", methods=["POST"])
 def iniciarSesion():
-    if not con.is_connected():
-        con.reconnect()
-
+    con = mysql.connector.connect(**db_config)
+    cursor = con.cursor(dictionary=True)
+    
     usuario    = request.form["txtUsuario"]
     contrasena = request.form["txtContrasena"]
-
-    cursor = con.cursor(dictionary=True)
-    # Importante: Asume que tienes la tabla 'usuarios' con 'Nombre_Usuario' y 'Contrasena'
+    
     sql    = "SELECT Id_Usuario FROM usuarios WHERE Nombre_Usuario = %s AND Contrasena = %s"
     val    = (usuario, contrasena)
 
     cursor.execute(sql, val)
     registros = cursor.fetchall()
+    
+    cursor.close()
     con.close()
+    
     return make_response(jsonify(registros))
 
 # =========================================================================
-# MÓDULO EMPLEADOS (N Capas)
+# MÓDULO EMPLEADOS
 # =========================================================================
 
 @app.route("/empleados")
-    def empleados():
-        return render_template("empleados.html")
+def empleados():
+    return render_template("empleados.html")
 
 @app.route("/tbodyEmpleados")
-    def tbodyEmpleados():
-        if not con.is_connected():
-            con.reconnect()
+def tbodyEmpleados():
+    con = mysql.connector.connect(**db_config)
+    cursor = con.cursor(dictionary=True)
+
+    sql    = "SELECT idEmpleado, nombreEmpleado, numero, fechaIngreso, idDepartamento FROM empleados ORDER BY idEmpleado DESC"
+    cursor.execute(sql)
+    registros = cursor.fetchall()
     
-        cursor = con.cursor(dictionary=True)
-        # MODIFICACIÓN: Se añade 'idDepartamento' a la consulta SELECT.
-        sql    = "SELECT idEmpleado, nombreEmpleado, numero, fechaIngreso, idDepartamento FROM empleados ORDER BY idEmpleado DESC"
-        cursor.execute(sql)
-        registros = cursor.fetchall()
-        con.close()
-        return render_template("tbodyEmpleados.html", empleados=registros)
+    cursor.close()
+    con.close()
+    
+    return render_template("tbodyEmpleados.html", empleados=registros)
 
 @app.route("/empleado", methods=["POST"])
-    def guardarEmpleado():
-        if not con.is_connected():
-            con.reconnect()
+def guardarEmpleado():
+    con = mysql.connector.connect(**db_config)
+    cursor = con.cursor()
     
-        idEmpleado     = request.form.get("idEmpleado", "")
-        nombreEmpleado = request.form["nombreEmpleado"]
-        numero         = request.form["numero"]
-        fechaIngreso   = request.form["fechaIngreso"]
-        # MODIFICACIÓN: Se obtiene el nuevo campo 'idDepartamento' del formulario.
-        idDepartamento = request.form["idDepartamento"]
-        
-        cursor = con.cursor()
+    idEmpleado     = request.form.get("idEmpleado", "")
+    nombreEmpleado = request.form["nombreEmpleado"]
+    numero         = request.form["numero"]
+    fechaIngreso   = request.form["fechaIngreso"]
+    idDepartamento = request.form["idDepartamento"]
+
+    if idEmpleado:
+        sql = "UPDATE empleados SET nombreEmpleado = %s, numero = %s, fechaIngreso = %s, idDepartamento = %s WHERE idEmpleado = %s"
+        val = (nombreEmpleado, numero, fechaIngreso, idDepartamento, idEmpleado)
+    else:
+        sql = "INSERT INTO empleados (nombreEmpleado, numero, fechaIngreso, idDepartamento) VALUES (%s, %s, %s, %s)"
+        val = (nombreEmpleado, numero, fechaIngreso, idDepartamento)
     
-        if idEmpleado:
-            # MODIFICACIÓN: Se actualiza también el 'idDepartamento' en el UPDATE.
-            sql = "UPDATE empleados SET nombreEmpleado = %s, numero = %s, fechaIngreso = %s, idDepartamento = %s WHERE idEmpleado = %s"
-            val = (nombreEmpleado, numero, fechaIngreso, idDepartamento, idEmpleado)
-        else:
-            # MODIFICACIÓN: Se añade 'idDepartamento' al INSERT.
-            sql = "INSERT INTO empleados (nombreEmpleado, numero, fechaIngreso, idDepartamento) VALUES (%s, %s, %s, %s)"
-            val = (nombreEmpleado, numero, fechaIngreso, idDepartamento)
-        
-        cursor.execute(sql, val)
-        con.commit()
-        con.close()
-        return make_response(jsonify({}))
+    cursor.execute(sql, val)
+    con.commit()
+
+    cursor.close()
+    con.close()
+    
+    return make_response(jsonify({}))
 
 # =========================================================================
-# MÓDULO ASISTENCIAS (Dirigida por Eventos)
+# MÓDULO ASISTENCIAS
 # =========================================================================
 
 @app.route("/asistencias")
@@ -132,62 +122,40 @@ def asistencias():
 
 @app.route("/tbodyAsistencias")
 def tbodyAsistencias():
-    if not con.is_connected():
-        con.reconnect()
-
+    con = mysql.connector.connect(**db_config)
     cursor = con.cursor(dictionary=True)
-    # READ (LECTURA)
+
     sql    = "SELECT idAsistencia, fecha, comentarios FROM asistencias ORDER BY idAsistencia DESC"
     cursor.execute(sql)
     registros = cursor.fetchall()
+
+    cursor.close()
     con.close()
+    
     return render_template("tbodyAsistencias.html", asistencias=registros)
 
 @app.route("/asistencia", methods=["POST"])
 def guardarAsistencia():
-    if not con.is_connected():
-        con.reconnect()
-
+    con = mysql.connector.connect(**db_config)
+    cursor = con.cursor()
+    
     fecha      = request.form["fecha"]
     comentarios = request.form["comentarios"]
     
-    cursor = con.cursor()
-    # CREATE (CREAR)
     sql    = "INSERT INTO asistencias (fecha, comentarios) VALUES (%s, %s)"
     val    = (fecha, comentarios)
     
     cursor.execute(sql, val)
     con.commit()
+
+    cursor.close()
     con.close()
 
-    # UPDATE (Editar)
-    @app.route("/asistencia/editar", methods=["POST"])
-def editarAsistencia():
-    if not con.is_connected():
-        con.reconnect()
-
-    idAsistencia = request.form["id"]
-    fecha        = request.form["fecha"]
-    comentarios  = request.form["comentarios"]
-
-    cursor = con.cursor()
-    # UPDATE (EDITAR)
-    sql = "UPDATE asistencias SET fecha = %s, comentarios = %s WHERE idAsistencia = %s"
-    val = (fecha, comentarios, idAsistencia)
-
-    cursor.execute(sql, val)
-    con.commit()
-    con.close()
-
-    pusherAsistencias()  # Notifica al frontend que hubo un cambio
-    return make_response(jsonify({}))
-
-    pusherAsistencias() # Emite el evento para la actualización en tiempo real.
+    pusherAsistencias()
     return make_response(jsonify({}))
 
 # =========================================================================
-# MÓDULO ASISTENCIASPASES (N Capas)
-# Para el READ se muestra la información relacionada con Empleados y Asistencias.
+# MÓDULO ASISTENCIASPASES
 # =========================================================================
 
 @app.route("/asistenciaspases")
@@ -196,17 +164,12 @@ def asistenciaspases():
 
 @app.route("/tbodyAsistenciasPases")
 def tbodyAsistenciasPases():
-    if not con.is_connected():
-        con.reconnect()
-
+    con = mysql.connector.connect(**db_config)
     cursor = con.cursor(dictionary=True)
-    # READ (LECTURA) - Une las tablas para mostrar la información completa
+
     sql = """
     SELECT 
-        AP.idAsistenciaPase, 
-        E.nombreEmpleado, 
-        A.fecha AS fechaAsistencia, 
-        AP.estado
+        AP.idAsistenciaPase, E.nombreEmpleado, A.fecha AS fechaAsistencia, AP.estado
     FROM asistenciaspases AS AP
     INNER JOIN empleados AS E ON E.idEmpleado = AP.idEmpleado
     INNER JOIN asistencias AS A ON A.idAsistencia = AP.idAsistencia
@@ -214,26 +177,32 @@ def tbodyAsistenciasPases():
     """
     cursor.execute(sql)
     registros = cursor.fetchall()
+    
+    cursor.close()
     con.close()
+    
     return render_template("tbodyAsistenciasPases.html", asistenciaspases=registros)
 
 @app.route("/asistenciapase/eliminar", methods=["POST"])
 def eliminarAsistenciaPase():
-    if not con.is_connected():
-        con.reconnect()
+    con = mysql.connector.connect(**db_config)
+    cursor = con.cursor()
 
-    id = request.form["id"]
-
-    cursor = con.cursor(dictionary=True)
-    # DELETE (ELIMINAR)
-    sql    = "DELETE FROM asistenciaspases WHERE idAsistenciaPase = %s"
-    val    = (id,)
+    id_pase = request.form["id"]
+    sql     = "DELETE FROM asistenciaspases WHERE idAsistenciaPase = %s"
+    val     = (id_pase,)
 
     cursor.execute(sql, val)
     con.commit()
+    
+    cursor.close()
     con.close()
 
     return make_response(jsonify({}))
+
+# =========================================================================
+# MÓDULO DEPARTAMENTOS
+# =========================================================================
 
 @app.route("/departamentos")
 def departamentos():
@@ -241,35 +210,14 @@ def departamentos():
 
 @app.route("/tbodyDepartamentos")
 def tbodyDepartamentos():
-    if not con.is_connected():
-        con.reconnect()
-
+    con = mysql.connector.connect(**db_config)
     cursor = con.cursor(dictionary=True)
-    # READ (LECTURA)
+    
     sql    = "SELECT idDepartamento, NombreDepartamento, Edificio, Descripcion FROM departamento ORDER BY idDepartamento DESC"
     cursor.execute(sql)
     registros = cursor.fetchall()
+    
+    cursor.close()
     con.close()
+    
     return render_template("tbodyDepartamentos.html", departamentos=registros)
-
-@app.route("/departamento", methods=["POST"])
-def guardarDepartamento():
-    if not con.is_connected():
-        con.reconnect()
-
-    idDepartamento     = request.form.get("idDepartamento", "")
-    nombreDepartamento = request.form["txtNombreDepartamento"]
-    edificio           = request.form["txtEdificio"]
-    descripcion        = request.form["txtDescripcion"]
-
-    cursor = con.cursor()
-
-    sql = """INSERT INTO departamento (NombreDepartamento, Edificio, Descripcion) 
-             VALUES (%s, %s, %s)"""
-    val = (nombreDepartamento, edificio, descripcion)
-
-    cursor.execute(sql, val)
-    con.commit()
-    con.close()
-    return make_response(jsonify({}))
-
