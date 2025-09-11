@@ -222,5 +222,5 @@ def tbodyDepartamentos():
         con.close()
         return render_template("tbodyDepartamentos.html", departamentos=registros)
     except Exception as e:
-        return f"Error en /tbodyDepartamentos: {str(e)}", 500
+        return f"Error en la peticion de la tabla /tbodyDepartamentos: {str(e)}", 500
 
