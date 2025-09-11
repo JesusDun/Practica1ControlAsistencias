@@ -210,7 +210,7 @@ def departamentos():
 
 @app.route("/tbodyDepartamentos")
 def tbodyDepartamentos():
-    try
+    try:
         if not con.is_connected():
             con.reconnect()
 
