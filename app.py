@@ -77,7 +77,23 @@ def tbodyEmpleados():
     con = mysql.connector.connect(**db_config)
     cursor = con.cursor(dictionary=True)
 
-    sql    = "SELECT idEmpleado, nombreEmpleado, numero, fechaIngreso, idDepartamento FROM empleados ORDER BY idEmpleado DESC"
+    # MODIFICACIÓN: Se usa INNER JOIN para obtener el nombre del departamento.
+    # Se selecciona E.* (todos los campos de empleados) y D.NombreDepartamento.
+    sql = """
+    SELECT 
+        E.idEmpleado, 
+        E.nombreEmpleado, 
+        E.numero, 
+        E.fechaIngreso, 
+        E.idDepartamento,
+        D.NombreDepartamento 
+    FROM 
+        empleados AS E
+    INNER JOIN 
+        departamento AS D ON E.idDepartamento = D.idDepartamento
+    ORDER BY 
+        E.idEmpleado DESC
+    """
     cursor.execute(sql)
     registros = cursor.fetchall()
     
