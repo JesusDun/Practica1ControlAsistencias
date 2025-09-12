@@ -1,17 +1,69 @@
-<div class="alert alert-info">
-    Este módulo demuestra la eliminación (Delete) y lectura (Read) de pases de asistencia.
-</div>
-<div class="table-responsive">
-    <table class="table table-sm">
-        <thead class="table-active">
-            <tr>
-                <th>ID Pase</th>
-                <th>Empleado</th>
-                <th>Fecha Asistencia</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody id="tbodyAsistenciasPases"></tbody>
-    </table>
-</div>
+<!DOCTYPE html>
+<html lang="es" ng-app="miApp">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Pases de Asistencia</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .table-actions {
+            width: 150px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body ng-controller="asistenciaspasesCtrl">
+
+    <div class="container-fluid mt-3">
+        
+        <!-- Formulario para Crear y Editar Pases -->
+        <form id="formAsistenciaPase" method="post" class="mb-4 p-3 border rounded bg-light">
+            <input type="hidden" id="idAsistenciaPase" name="idAsistenciaPase">
+            
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label for="idEmpleado">Empleado</label>
+                    <select class="form-control" id="idEmpleado" name="idEmpleado" required>
+                    </select>
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="idAsistencia">Fecha de Asistencia</label>
+                    <select class="form-control" id="idAsistencia" name="idAsistencia" required>
+                    </select>
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="estado">Estado</label>
+                    <select class="form-control" id="estado" name="estado" required>
+                        <option value="" disabled selected>Seleccione un estado</option>
+                        <option value="Asistencia">Asistencia</option>
+                        <option value="Retardo">Retardo</option>
+                        <option value="Falta">Falta</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="text-right">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+                <button type="button" class="btn btn-secondary" id="btnLimpiarForm">Limpiar</button>
+            </div>
+        </form>
+
+        <!-- Tabla de Pases de Asistencia -->
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered table-striped">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>ID Pase</th>
+                        <th>Empleado</th>
+                        <th>Fecha Asistencia</th>
+                        <th>Estado</th>
+                        <th class="table-actions">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyAsistenciasPases">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
