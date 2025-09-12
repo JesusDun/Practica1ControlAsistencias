@@ -40,6 +40,14 @@ def pusherAsistencias():
 app.secret_key = "pruebaLLaveSecreta_123"
 
 # =========================================================================
+# BASE
+# =========================================================================
+@app.route("/")
+def login():
+    if "idUsuario" in session:
+        return redirect(url_for("index"))
+    return render_template("login.html")
+# =========================================================================
 # MÓDULO EMPLEADOS
 # =========================================================================
 
