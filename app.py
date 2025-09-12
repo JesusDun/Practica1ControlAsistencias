@@ -31,6 +31,8 @@ pusher_client = pusher.Pusher(
     ssl=True
 )
 
+app.secret_key = "pruebaLLaveSecreta_123"
+
 def pusherAsistencias():
     pusher_client.trigger("canalAsistencias", "eventoAsistencias", {"message": "Nueva asistencia registrada."})
     return make_response(jsonify({}))
@@ -53,13 +55,12 @@ def iniciarSesion():
     contrasena_ingresada = request.form.get("txtContrasena")
 
     if not usuario_ingresado or not contrasena_ingresada:
-        return make_response(jsonify([]), 400) # Datos incompletos
+        return make_response(jsonify([]), 400)  # Datos incompletos
 
     con = mysql.connector.connect(**db_config)
     cursor = con.cursor(dictionary=True)
-    
-    # Corregido: La columna se llama 'username', no 'Nombre_Usuario'
-    sql = "SELECT idUsuario, password FROM usuarios WHERE username = %s"
+
+    sql = "SELECT idUsuario, username, password FROM usuarios WHERE username = %s"
     cursor.execute(sql, (usuario_ingresado,))
     registro_usuario = cursor.fetchone()
     con.close()
@@ -69,11 +70,18 @@ def iniciarSesion():
         hash_guardado = registro_usuario['password'].encode('utf-8')
         contrasena_ingresada_bytes = contrasena_ingresada.encode('utf-8')
 
-        # Usamos bcrypt para comparar de forma segura
         if bcrypt.checkpw(contrasena_ingresada_bytes, hash_guardado):
+            # ✅ Guardamos la sesión
+            session["idUsuario"] = registro_usuario["idUsuario"]
+            session["username"] = registro_usuario["username"]
             usuario_encontrado = [{"Id_Usuario": registro_usuario['idUsuario']}]
 
     return make_response(jsonify(usuario_encontrado or []))
+
+@app.route("/cerrarSesion")
+def cerrarSesion():
+    session.clear()
+    return redirect(url_for("login"))
 
 # =========================================================================
 # MÓDULO EMPLEADOS
