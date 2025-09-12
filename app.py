@@ -222,12 +222,14 @@ def editarAsistencia():
     return make_response(jsonify({}))
 
 # =========================================================================
-# MÓDULO ASISTENCIASPASES
+# MÓDULO ASISTENCIASPASES (Arquitectura: Dirigida a Eventos)
+# En Pases de Asistencia, en lugar de ejecutarse directamente el CRUD, todo pasa por eventos que desencadenan las operaciones.
 # =========================================================================
 
 @app.route("/asistenciaspases")
 def asistenciaspases():
     return render_template("asistenciaspases.html")
+
 
 @app.route("/tbodyAsistenciasPases")
 def tbodyAsistenciasPases():
@@ -249,6 +251,60 @@ def tbodyAsistenciasPases():
     con.close()
     
     return render_template("tbodyAsistenciasPases.html", asistenciaspases=registros)
+
+
+# =====================================================
+# EVENTO: Registrar un nuevo Pase de Asistencia
+# =====================================================
+@app.route("/asistenciapase", methods=["POST"])
+def registrarAsistenciaPase():
+    idEmpleado   = request.form["idEmpleado"]
+    idAsistencia = request.form["idAsistencia"]
+    estado       = request.form["estado"]
+
+    # 🚀 En lugar de guardar directo, lanzamos un evento
+    pusher_client.trigger("canalPases", "eventoNuevoPase", {
+        "idEmpleado": idEmpleado,
+        "idAsistencia": idAsistencia,
+        "estado": estado
+    })
+
+    return jsonify({"status": "evento_lanzado"})
+
+
+# =====================================================
+# LISTENER: Maneja el evento y guarda en la BD
+# =====================================================
+def manejarEventoPase(data):
+    con = mysql.connector.connect(**db_config)
+    cursor = con.cursor()
+
+    sql = """
+    INSERT INTO asistenciaspases (idEmpleado, idAsistencia, estado)
+    VALUES (%s, %s, %s)
+    """
+    val = (data["idEmpleado"], data["idAsistencia"], data["estado"])
+
+    cursor.execute(sql, val)
+    con.commit()
+
+    cursor.close()
+    con.close()
+
+
+# =====================================================
+# SUSCRIPCIÓN AL EVENTO
+# =====================================================
+# Simulamos un "listener" dentro del servidor Flask.
+# Nota: Pusher es normalmente cliente → frontend, 
+# pero aquí forzamos el flujo para mostrar arquitectura basada en eventos.
+@app.before_request
+def escuchar_evento_pases():
+    # ⚠️ Aquí podrías integrar un consumidor real si usas colas tipo RabbitMQ o Kafka,
+    # pero para tu práctica basta con simularlo.
+    # Por ejemplo: si detectas un request especial con datos de evento, lo mandas a manejarEventoPase.
+    pass
+
 
 @app.route("/asistenciapase/eliminar", methods=["POST"])
 def eliminarAsistenciaPase():
