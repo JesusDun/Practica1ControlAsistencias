@@ -46,31 +46,31 @@ app.secret_key = "pruebaLLaveSecreta_123"
 @app.route("/")
 def login():
     if "idUsuario" in session:
-    return redirect(url_for("index"))
+        return redirect(url_for("index"))
     return render_template("login.html")
 
 @app.route("/iniciarSesion", methods=["POST"])
 def iniciarSesion():
-    usuario_ingresado = request.form["txtUsuario"]
-    contrasena_ingresada = request.form["txtContrasena"]
+    usuario_ingresado = request.form["txtUsuario"]
+    contrasena_ingresada = request.form["txtContrasena"]
 
-    if not usuario_ingresado or not contrasena_ingresada:
-        return "Datos incompletos", 400
+    if not usuario_ingresado or not contrasena_ingresada:
+        return "Datos incompletos", 400
 
-    con = mysql.connector.connect(**db_config)
-    cursor = con.cursor(dictionary=True)
-    cursor.execute("SELECT idUsuario, username, password FROM usuarios WHERE username = %s", (usuario_ingresado,))
-    registro_usuario = cursor.fetchone()
-    con.close()
+    con = mysql.connector.connect(**db_config)
+    cursor = con.cursor(dictionary=True)
+    cursor.execute("SELECT idUsuario, username, password FROM usuarios WHERE username = %s", (usuario_ingresado,))
+    registro_usuario = cursor.fetchone()
+    con.close()
 
-    if registro_usuario:
-        hash_guardado = registro_usuario['password'].encode('utf-8')
-        contrasena_ingresada_bytes = contrasena_ingresada.encode('utf-8')
-        if bcrypt.checkpw(contrasena_ingresada_bytes, hash_guardado):
-            session["idUsuario"] = registro_usuario["idUsuario"]
-            session["username"] = registro_usuario["username"]
-            return redirect(url_for("index"))
-    return "Usuario o contraseña incorrectos", 401
+    if registro_usuario:
+        hash_guardado = registro_usuario['password'].encode('utf-8')
+        contrasena_ingresada_bytes = contrasena_ingresada.encode('utf-8')
+        if bcrypt.checkpw(contrasena_ingresada_bytes, hash_guardado):
+            session["idUsuario"] = registro_usuario["idUsuario"]
+            session["username"] = registro_usuario["username"]
+            return redirect(url_for("index"))
+    return "Usuario o contraseña incorrectos", 401
 
 @app.route("/index")
 def index():
