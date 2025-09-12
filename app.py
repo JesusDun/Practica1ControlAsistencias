@@ -51,31 +51,27 @@ def login():
 
 @app.route("/iniciarSesion", methods=["POST"])
 def iniciarSesion():
-    data = request.get_json()
-    usuario_ingresado = data.get("usuario")
-    contrasena_ingresada = data.get("contrasena")
+    usuario_ingresado = request.form.get("txtUsuario")
+    contrasena_ingresada = request.form.get("txtContrasena")
 
-    # Conexión a la base de datos
+    if not usuario_ingresado or not contrasena_ingresada:
+        return "Datos incompletos", 400
+
     con = mysql.connector.connect(**db_config)
     cursor = con.cursor(dictionary=True)
-    cursor.execute(
-        "SELECT idUsuario, username, password FROM usuarios WHERE username = %s",
-        (usuario_ingresado,)
-    )
+    cursor.execute("SELECT idUsuario, username, password FROM usuarios WHERE username = %s", (usuario_ingresado,))
     registro_usuario = cursor.fetchone()
     con.close()
 
     if registro_usuario:
-        # Comparación simple de contraseña
-        if contrasena_ingresada == registro_usuario["password"]:
+        hash_guardado = registro_usuario['password'].encode('utf-8')
+        contrasena_ingresada_bytes = contrasena_ingresada.encode('utf-8')
+        if bcrypt.checkpw(contrasena_ingresada_bytes, hash_guardado):
             session["idUsuario"] = registro_usuario["idUsuario"]
             session["username"] = registro_usuario["username"]
-            return jsonify({"status": "ok"})
-        else:
-            return jsonify({"status": "error", "mensaje": "Contraseña incorrecta"})
-    else:
-        return jsonify({"status": "error", "mensaje": "Usuario no encontrado"})
+            return redirect(url_for("index"))
 
+    return "Usuario o contraseña incorrectos", 401
 
 @app.route("/index")
 def index():
