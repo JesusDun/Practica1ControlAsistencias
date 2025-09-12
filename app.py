@@ -5,7 +5,7 @@
 # pip install -r requirements.txt
 # pip install bcrypt
 
-from flask import Flask, render_template, request, jsonify, make_response
+from flask import Flask, render_template, request, jsonify, make_response, session, redirect, url_for
 import mysql.connector
 from flask_cors import CORS, cross_origin
 import pusher
@@ -37,12 +37,17 @@ def pusherAsistencias():
     pusher_client.trigger("canalAsistencias", "eventoAsistencias", {"message": "Nueva asistencia registrada."})
     return make_response(jsonify({}))
 
+app.secret_key = "pruebaLLaveSecreta_123"
+
 # =========================================================================
-# RUTAS BASE
+# LOGIN
 # =========================================================================
 
 @app.route("/")
 def index():
+    # Si no hay sesión → manda a login
+    if "idUsuario" not in session:
+        return redirect(url_for("app2"))
     return render_template("index.html")
 
 @app.route("/app")
@@ -55,7 +60,7 @@ def iniciarSesion():
     contrasena_ingresada = request.form.get("txtContrasena")
 
     if not usuario_ingresado or not contrasena_ingresada:
-        return make_response(jsonify([]), 400)  # Datos incompletos
+        return jsonify({"status": "error", "mensaje": "Faltan datos"}), 400
 
     con = mysql.connector.connect(**db_config)
     cursor = con.cursor(dictionary=True)
@@ -65,23 +70,22 @@ def iniciarSesion():
     registro_usuario = cursor.fetchone()
     con.close()
 
-    usuario_encontrado = None
     if registro_usuario:
         hash_guardado = registro_usuario['password'].encode('utf-8')
         contrasena_ingresada_bytes = contrasena_ingresada.encode('utf-8')
 
         if bcrypt.checkpw(contrasena_ingresada_bytes, hash_guardado):
-            # ✅ Guardamos la sesión
             session["idUsuario"] = registro_usuario["idUsuario"]
             session["username"] = registro_usuario["username"]
-            usuario_encontrado = [{"Id_Usuario": registro_usuario['idUsuario']}]
 
-    return make_response(jsonify(usuario_encontrado or []))
+            return jsonify({"status": "ok", "mensaje": "Inicio de sesión correcto"})
+    
+    return jsonify({"status": "error", "mensaje": "Usuario o contraseña incorrectos"}), 401
 
 @app.route("/cerrarSesion")
 def cerrarSesion():
     session.clear()
-    return redirect(url_for("login"))
+    return redirect(url_for("app2"))  # regresa al login
 
 # =========================================================================
 # MÓDULO EMPLEADOS
