@@ -248,7 +248,6 @@ def guardarDepartamento():
     descripcion        = request.form["txtDescripcion"]
 
     if idDepartamento:  
-        # UPDATE (si trae idDepartamento)
         sql = """
             UPDATE departamento
             SET NombreDepartamento = %s, Edificio = %s, Descripcion = %s
@@ -256,7 +255,6 @@ def guardarDepartamento():
         """
         val = (nombreDepartamento, edificio, descripcion, idDepartamento)
     else:
-        # INSERT (si no trae idDepartamento)
         sql = """
             INSERT INTO departamento (NombreDepartamento, Edificio, Descripcion)
             VALUES (%s, %s, %s)
