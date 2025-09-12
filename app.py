@@ -236,6 +236,42 @@ def eliminarAsistenciaPase():
 def departamentos():
     return render_template("departamentos.html")
 
+
+@app.route("/departamento", methods=["POST"])
+def guardarDepartamento():
+    con = mysql.connector.connect(**db_config)
+    cursor = con.cursor()
+
+    idDepartamento     = request.form.get("idDepartamento", "")
+    nombreDepartamento = request.form["txtNombreDepartamento"]
+    edificio           = request.form["txtEdificio"]
+    descripcion        = request.form["txtDescripcion"]
+
+    if idDepartamento:  
+        # UPDATE (si trae idDepartamento)
+        sql = """
+            UPDATE departamento
+            SET NombreDepartamento = %s, Edificio = %s, Descripcion = %s
+            WHERE idDepartamento = %s
+        """
+        val = (nombreDepartamento, edificio, descripcion, idDepartamento)
+    else:
+        # INSERT (si no trae idDepartamento)
+        sql = """
+            INSERT INTO departamento (NombreDepartamento, Edificio, Descripcion)
+            VALUES (%s, %s, %s)
+        """
+        val = (nombreDepartamento, edificio, descripcion)
+
+    cursor.execute(sql, val)
+    con.commit()
+
+    cursor.close()
+    con.close()
+
+    return jsonify({"status": "success"})
+
+
 @app.route("/tbodyDepartamentos")
 def tbodyDepartamentos():
     con = mysql.connector.connect(**db_config)
@@ -249,4 +285,3 @@ def tbodyDepartamentos():
     con.close()
     
     return render_template("tbodyDepartamentos.html", departamentos=registros)
-
