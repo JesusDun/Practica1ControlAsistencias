@@ -51,34 +51,37 @@ def login():
 
 @app.route("/iniciarSesion", methods=["POST"])
 def iniciarSesion():
-    usuario_ingresado = request.form.get("txtUsuario")
-    contrasena_ingresada = request.form.get("txtContrasena")
+    usuario_ingresado = request.form.get("txtUsuario")
+    contrasena_ingresada = request.form.get("txtContrasena")
 
-    if not usuario_ingresado or not contrasena_ingresada:
-        return jsonify({"status": "error", "message": "Datos incompletos"}), 400
+    if not usuario_ingresado or not contrasena_ingresada:
+        return "Datos incompletos", 400
 
-    try:
-        con = mysql.connector.connect(**db_config)
-        cursor = con.cursor(dictionary=True)
-        cursor.execute("SELECT idUsuario, username, password FROM usuarios WHERE username = %s", (usuario_ingresado,))
-        registro_usuario = cursor.fetchone()
-        con.close()
+    con = mysql.connector.connect(**db_config)
+    cursor = con.cursor(dictionary=True)
+    cursor.execute("SELECT idUsuario, username, password FROM usuarios WHERE username = %s", (usuario_ingresado,))
+    registro_usuario = cursor.fetchone()
+    con.close()
 
-        if registro_usuario:
-            hash_guardado = registro_usuario['password'].encode('utf-8')
-            contrasena_ingresada_bytes = contrasena_ingresada.encode('utf-8')
-            
-            # Utiliza try-except para manejar el caso de un hash no válido.
-            if bcrypt.checkpw(contrasena_ingresada_bytes, hash_guardado):
-                session["idUsuario"] = registro_usuario["idUsuario"]
-                session["username"] = registro_usuario["username"]
-                return jsonify({"status": "success", "redirect_url": url_for("index")})
-        
-    except Exception as e:
-        # Esto te ayuda a ver errores en el servidor
-        print(f"Error en el inicio de sesión: {e}") 
-        return jsonify({"status": "error", "message": "Error interno del servidor"}), 500
+    if registro_usuario:
+        hash_guardado = registro_usuario['password'].encode('utf-8')
+        contrasena_ingresada_bytes = contrasena_ingresada.encode('utf-8')
+        if bcrypt.checkpw(contrasena_ingresada_bytes, hash_guardado):
+            session["idUsuario"] = registro_usuario["idUsuario"]
+            session["username"] = registro_usuario["username"]
+            return redirect(url_for("index"))
+    return "Usuario o contraseña incorrectos", 401
 
+@app.route("/index")
+def index():
+    if "idUsuario" not in session:
+        return redirect(url_for("login"))
+    return render_template("index.html")
+
+@app.route("/cerrarSesion")
+def cerrarSesion():
+    session.clear()
+    return redirect(url_for("login"))
 # =========================================================================
 # MÓDULO EMPLEADOS
 # =========================================================================
