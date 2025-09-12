@@ -165,7 +165,6 @@ app.controller("asistenciasCtrl", function ($scope, $http) {
         $.post("/asistencia", $(this).serialize())
     })
 
-
     // Botón de Editar
     $(document).on("click", ".btn-editar-asistencia", function () {
     const id = $(this).data("id")
@@ -174,6 +173,12 @@ app.controller("asistenciasCtrl", function ($scope, $http) {
 
     $("#txtFecha").val(fecha)
     $("#txtComentarios").val(comentarios)
+
+    if ($("#hiddenId").length === 0) {
+        $("#frmAsistencia").append(`<input type="hidden" id="hiddenId" name="id">`)
+    }
+    $("#hiddenId").val(id)
+})
 
     // Guarda el ID en un campo oculto para saber si es edición
     if ($("#hiddenId").length === 0) {
