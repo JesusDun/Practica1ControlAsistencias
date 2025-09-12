@@ -286,8 +286,8 @@ app.controller("departamentosCtrl", function ($scope, $http) {
     var pusher = new Pusher("686124f7505c58418f23", { // Tu KEY
       cluster: "us2"
     });
-    var channel = pusher.subscribe("canalDepartamento");
-    channel.bind("eventoDepartamento", function(data) {
+    var channel = pusher.subscribe("canalDepartamentos");
+    channel.bind("eventoDepartamentos", function(data) {
         console.log("Evento Pusher recibido para Departamentos, actualizando tabla...");
         buscarDepartamentos();
     });
