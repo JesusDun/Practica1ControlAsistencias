@@ -318,6 +318,5 @@ def guardarDepartamento():
     con.commit()
     cursor.close()
     con.close()
-    pusherDepartamentos()
     
     return make_response(jsonify({"status": "success"}))
