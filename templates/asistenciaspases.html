@@ -4,18 +4,24 @@
         <label for="selIdEmpleado">Empleado</label>
         <select class="form-select" id="selIdEmpleado" name="idEmpleado" required>
             <option value="" selected disabled>-- Selecciona un Empleado --</option>
-            
             {% for empleado in empleados %}
             <option value="{{ empleado.idEmpleado }}">{{ empleado.nombreEmpleado }}</option>
             {% endfor %}
         </select>
     </div>
+    
     <div class="mb-1">
-        <label>Fecha de Asistencia</label>
-        <input type="date" class="form-control" id="txtFechaAsistencia" name="fechaAsistencia" required>
+        <label for="selIdAsistencia">Fecha de Asistencia</label>
+        <select class="form-select" id="selIdAsistencia" name="idAsistencia" required>
+            <option value="" selected disabled>-- Selecciona una Fecha de Asistencia --</option>
+            {% for asistencia in asistencias %}
+            <option value="{{ asistencia.idAsistencia }}">{{ asistencia.fecha }}</option>
+            {% endfor %}
+        </select>
     </div>
+
     <div class="form-group col-md-4">
-        <label for="estado">Estado</label>
+        <label for="selEstado">Estado</label>
         <select class="form-control" id="selEstado" name="selEstado" required>
             <option value="" disabled selected>-- Seleccione un Estado --</option>
             <option value="Asistencia">Asistencia</option>
@@ -28,13 +34,14 @@
         <button class="btn btn-primary">Guardar</button>
     </div>
 </form>
+
 <div class="table-responsive">
     <table class="table table-sm">
         <thead class="table-active">
             <tr>
-                <th>ID Pase</th>
+                <th>ID Asistencia Pase</th>
                 <th>Empleado</th>
-                <th>Fecha de Asistencia</th>
+                <th>Asistencia</th>
                 <th>Estado</th>
                 <th></th>
             </tr>
