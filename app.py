@@ -55,7 +55,7 @@ def iniciarSesion():
     contrasena_ingresada = request.form.get("txtContrasena")
 
     if not usuario_ingresado or not contrasena_ingresada:
-        return "Datos incompletos", 400
+        return jsonify({"status": "error", "msg": "Datos incompletos"}), 400
 
     con = mysql.connector.connect(**db_config)
     cursor = con.cursor(dictionary=True)
@@ -69,9 +69,9 @@ def iniciarSesion():
         if bcrypt.checkpw(contrasena_ingresada_bytes, hash_guardado):
             session["idUsuario"] = registro_usuario["idUsuario"]
             session["username"] = registro_usuario["username"]
-            return redirect(url_for("index"))
+            return jsonify({"status": "ok"})
 
-    return "Usuario o contraseña incorrectos", 401
+    return jsonify({"status": "error", "msg": "Usuario o contraseña incorrectos"}), 401
 
 @app.route("/index")
 def index():
