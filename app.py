@@ -39,6 +39,9 @@ def pusherAsistencias():
 def pusherEmpleados():
     pusher_client.trigger("canalEmpleados", "eventoEmpleados", {"message": "La lista de empleados ha cambiado."})
 
+def pusherAsistenciasPases():
+    pusher_client.trigger("canalAsistenciasPases", "eventoAsistenciasPases", {"message": "La lista de pases de asistencia ha cambiado."})
+    
 def pusherDepartamentos():
     pusher_client.trigger("canalDepartamentos", "eventoDepartamentos", {"message": "La lista de empleados ha cambiado."})
 
@@ -193,18 +196,30 @@ def guardarAsistencia():
 
 @app.route("/asistenciaspases")
 def asistenciaspases():
-    return render_template("asistenciaspases.html")
+    # Es necesario pasar los empleados al template para llenar el <select>
+    con = mysql.connector.connect(**db_config)
+    cursor = con.cursor(dictionary=True)
+    cursor.execute("SELECT idEmpleado, nombreEmpleado FROM empleados ORDER BY nombreEmpleado ASC")
+    empleados = cursor.fetchall()
+    con.close()
+    # Pasamos la lista de empleados al renderizar la página principal
+    return render_template("asistenciaspases.html", empleados=empleados)
+
 
 @app.route("/tbodyAsistenciasPases")
 def tbodyAsistenciasPases():
     con = mysql.connector.connect(**db_config)
     cursor = con.cursor(dictionary=True)
+    # CORRECCIÓN: Se añade AP.idEmpleado a la consulta para que esté disponible en los data-attributes
     sql = """
     SELECT 
-        AP.idAsistenciaPase, E.nombreEmpleado, A.fecha AS fechaAsistencia, AP.estado
+        AP.idAsistenciaPase, 
+        AP.idEmpleado, 
+        E.nombreEmpleado, 
+        AP.fechaAsistencia, 
+        AP.estado
     FROM asistenciaspases AS AP
     INNER JOIN empleados AS E ON E.idEmpleado = AP.idEmpleado
-    INNER JOIN asistencias AS A ON A.idAsistencia = AP.idAsistencia
     ORDER BY AP.idAsistenciaPase DESC
     """
     cursor.execute(sql)
@@ -213,80 +228,75 @@ def tbodyAsistenciasPases():
     con.close()
     return render_template("tbodyAsistenciasPases.html", asistenciaspases=registros)
 
-# --- RUTA UNIFICADA PARA CREAR Y ACTUALIZAR ---
+# --- RUTA UNIFICADA PARA CREAR Y ACTUALIZAR (MODIFICADA) ---
 @app.route("/asistenciapase", methods=["POST"])
 def guardarAsistenciaPase():
+    con = None
     try:
+        idAsistenciaPase = request.form.get("idAsistenciaPase")
+        idEmpleado = request.form.get("idEmpleado")
+        fechaAsistencia = request.form.get("fechaAsistencia")
+        estado = request.form.get("selEstado") # El name de tu select es selEstado
+
+        if not all([idEmpleado, fechaAsistencia, estado]):
+            return make_response(jsonify({"error": "Faltan datos requeridos."}), 400)
+
         con = mysql.connector.connect(**db_config)
         cursor = con.cursor()
         
-        idAsistenciaPase = request.form.get("idAsistenciaPase")
-        idEmpleado = request.form["idEmpleado"]
-        idAsistencia = request.form["idAsistencia"]
-        estado = request.form["estado"]
-
         if idAsistenciaPase:
             # Lógica de Actualización
-            sql = """
-                UPDATE asistenciaspases 
-                SET idEmpleado = %s, idAsistencia = %s, estado = %s 
-                WHERE idAsistenciaPase = %s
-            """
-            val = (idEmpleado, idAsistencia, estado, idAsistenciaPase)
+            sql = "UPDATE asistenciaspases SET idEmpleado = %s, fechaAsistencia = %s, estado = %s WHERE idAsistenciaPase = %s"
+            val = (idEmpleado, fechaAsistencia, estado, idAsistenciaPase)
         else:
-            # Lógica de Creación (Lanzando evento con Pusher como lo tenías)
-            pusher_client.trigger("canalPases", "eventoNuevoPase", {
-                "idEmpleado": idEmpleado,
-                "idAsistencia": idAsistencia,
-                "estado": estado
-            })
-            # Nota: La inserción real ocurre en manejarEventoPase
-            # Para un CRUD más directo, aquí iría el INSERT
-            sql = """
-                INSERT INTO asistenciaspases (idEmpleado, idAsistencia, estado) 
-                VALUES (%s, %s, %s)
-            """
-            val = (idEmpleado, idAsistencia, estado)
+            # Lógica de Creación
+            sql = "INSERT INTO asistenciaspases (idEmpleado, fechaAsistencia, estado) VALUES (%s, %s, %s)"
+            val = (idEmpleado, fechaAsistencia, estado)
 
         cursor.execute(sql, val)
         con.commit()
-        return jsonify({"status": "success"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
-    finally:
-        cursor.close()
-        con.close()
+        
+        # Se notifica a los clientes del cambio a través de Pusher.
+        pusherAsistenciasPases() 
+        
+        return make_response(jsonify({"message": "Operación exitosa"}), 200)
 
-# --- RUTA PARA OBTENER DATOS DE UN PASE (PARA EDITAR) ---
-@app.route("/asistenciapase/<int:id>", methods=["GET"])
-def obtenerAsistenciaPase(id):
-    try:
-        con = mysql.connector.connect(**db_config)
-        cursor = con.cursor(dictionary=True)
-        sql = "SELECT * FROM asistenciaspases WHERE idAsistenciaPase = %s"
-        cursor.execute(sql, (id,))
-        pase = cursor.fetchone()
-        if pase:
-            return jsonify(pase)
-        return jsonify({"error": "Pase no encontrado"}), 404
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    except mysql.connector.Error as err:
+        if con: con.rollback()
+        return make_response(jsonify({"error": f"Error de base de datos: {err}"}), 500)
+
     finally:
-        cursor.close()
-        con.close()
+        if con and con.is_connected():
+            cursor.close()
+            con.close()
+
 
 @app.route("/asistenciapase/eliminar", methods=["POST"])
 def eliminarAsistenciaPase():
-    con = mysql.connector.connect(**db_config)
-    cursor = con.cursor()
-    id_pase = request.form["id"]
-    sql = "DELETE FROM asistenciaspases WHERE idAsistenciaPase = %s"
-    val = (id_pase,)
-    cursor.execute(sql, val)
-    con.commit()
-    cursor.close()
-    con.close()
-    return make_response(jsonify({}))
+    # MODIFICADO: Añadido manejo de errores y notificación Pusher
+    con = None
+    try:
+        con = mysql.connector.connect(**db_config)
+        cursor = con.cursor()
+        id_pase = request.form["id"]
+        sql = "DELETE FROM asistenciaspases WHERE idAsistenciaPase = %s"
+        val = (id_pase,)
+        cursor.execute(sql, val)
+        con.commit()
+
+        # Notificamos a Pusher que algo cambió
+        pusherAsistenciasPases()
+        
+        return make_response(jsonify({"message": "Eliminación exitosa"}), 200)
+
+    except mysql.connector.Error as err:
+        if con: con.rollback()
+        return make_response(jsonify({"error": f"Error de base de datos: {err}"}), 500)
+    
+    finally:
+        if con and con.is_connected():
+            cursor.close()
+            con.close()
 
 # =========================================================================
 # MÓDULO DEPARTAMENTOS
