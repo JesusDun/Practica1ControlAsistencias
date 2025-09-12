@@ -84,51 +84,60 @@ app.controller("appCtrl", function ($scope, $http, $window) {
         event.preventDefault()
         $.post("/iniciarSesion", $(this).serialize())
             .done(function (respuesta) {
-                if (respuesta.status === "success") {
+                // Asumiendo que el backend ahora devuelve un array (vacío si falla, con datos si tiene éxito)
+                if (Array.isArray(respuesta) && respuesta.length > 0) {
                     alert("Iniciaste Sesión")
-                    $window.location.href = respuesta.redirect_url
+                    $window.location.href = '#/empleados'; // Redirección AngularJS
                 } else {
-                    alert(respuesta.message || "Usuario y/o Contraseña Incorrecto(s)")
+                    alert("Usuario y/o Contraseña Incorrecto(s)")
                 }
             })
-            .fail(function (xhr) {
-                // Manejar errores de servidor (ej. 400 o 401)
-                const respuesta = xhr.responseJSON;
-                alert(respuesta.message || "Hubo un problema. Inténtalo de nuevo.");
+            .fail(function () {
+                alert("Hubo un problema con el servidor. Inténtalo de nuevo.");
             });
     });
 });
 
-// Controlador para Empleados
+// =========================================================================
+// MODIFICACIÓN: Controlador para Empleados (Corregido y con Pusher)
+// =========================================================================
 app.controller("empleadosCtrl", function ($scope, $http) {
     function buscarEmpleados() {
         $.get("/tbodyEmpleados", function (trsHTML) {
             $("#tbodyEmpleados").html(trsHTML)
         })
     }
-    buscarEmpleados()
 
-    // Evento para enviar el formulario (Crea o Actualiza)
-    $(document).on("submit", "#frmEmpleado", function (event) {
+    // --- Lógica de Pusher para tiempo real ---
+    Pusher.logToConsole = true;
+    var pusher = new Pusher("686124f7505c58418f23", { // Tu KEY
+      cluster: "us2"
+    });
+    var channel = pusher.subscribe("canalEmpleados");
+    channel.bind("eventoEmpleados", function(data) {
+        console.log("Evento Pusher recibido para empleados, actualizando tabla...");
+        buscarEmpleados();
+    });
+
+    // Carga inicial de datos
+    buscarEmpleados();
+
+    // --- Lógica de Formulario (con corrección de doble envío) ---
+    $(document).off("submit", "#frmEmpleado").on("submit", "#frmEmpleado", function (event) {
         event.preventDefault();
         
         $.post("/empleado", $(this).serialize())
             .done(function() {
-                buscarEmpleados();
-                
-                // IMPORTANTE: Limpiar el formulario después de guardar.
-                // Esto resetea todos los campos y vacía el ID oculto,
-                // dejando el formulario listo para un nuevo registro.
+                // Pusher se encargará de actualizar la tabla, solo limpiamos el formulario.
                 $("#frmEmpleado")[0].reset();
                 $("#idEmpleado").val(""); 
             })
             .fail(function(response) {
-                // Muestra un error si algo sale mal en el servidor.
-                alert("Error al guardar: " + response.responseJSON.error);
+                alert("Error al guardar: " + (response.responseJSON ? response.responseJSON.error : "Error desconocido"));
             });
     });
 
-    // Evento para el botón "Editar" (Llena el formulario)
+    // Evento para el botón "Editar" (sin cambios)
     $(document).on("click", ".btn-editar-empleado", function () {
         const id = $(this).data("id");
         const nombre = $(this).data("nombre");
@@ -136,7 +145,6 @@ app.controller("empleadosCtrl", function ($scope, $http) {
         const fecha = $(this).data("fecha");
         const idDepartamento = $(this).data("iddepartamento");
 
-        // Llenamos todos los campos del formulario, incluyendo el ID oculto.
         $("#idEmpleado").val(id);
         $("#txtNombreEmpleado").val(nombre);
         $("#txtNumero").val(numero);
@@ -169,13 +177,10 @@ app.controller("asistenciasCtrl", function ($scope, $http) {
         const id = $(this).data("id");
         const fecha = $(this).data("fecha");
         const comentarios = $(this).data("comentarios");
-        const url = id ? "/asistencia/actualizar" : "/asistencia";
 
         $("#txtFecha").val(fecha);
         $("#txtComentarios").val(comentarios);
         
-        // CORRECCIÓN: Toda la lógica de edición (incluyendo crear el input oculto)
-        // debe estar DENTRO del evento 'click'.
         if ($("#hiddenId").length === 0) {
             $("#frmAsistencia").append(`<input type="hidden" id="hiddenId" name="idAsistencia">`);
         }
@@ -183,19 +188,21 @@ app.controller("asistenciasCtrl", function ($scope, $http) {
     });
 
     $(document).off("submit", "#frmAsistencia").on("submit", "#frmAsistencia", function (event) {
-    event.preventDefault();
-    const id = $("#hiddenId").val();
-    const url = id ? "/asistencia/editar" : "/asistencia";
+        event.preventDefault();
+        const id = $("#hiddenId").val();
+        const url = id ? "/asistencia/editar" : "/asistencia"; // Asume que tienes una ruta para editar
 
-    $.post(url, $(this).serialize())
-        .done(function () {
-            buscarAsistencias();
-            $("#frmAsistencia")[0].reset();
-            $("#hiddenId").remove();
-        })
-        .fail(function () {
-            alert("Hubo un error al guardar la asistencia.");
-        });
+        $.post(url, $(this).serialize())
+            .done(function () {
+                buscarAsistencias();
+                $("#frmAsistencia")[0].reset();
+                if ($("#hiddenId").length > 0) {
+                   $("#hiddenId").remove();
+                }
+            })
+            .fail(function () {
+                alert("Hubo un error al guardar la asistencia.");
+            });
     });
 });
 
@@ -210,7 +217,6 @@ app.controller("asistenciaspasesCtrl", function ($scope, $http) {
 
     $(document).on("click", ".btn-eliminar-pase", function (event) {
         const id = $(this).data("id")
-        // DELETE (ELIMINAR)
         if (confirm(`¿Estás seguro de eliminar el pase #${id}?`)) {
             $.post("/asistenciapase/eliminar", { id: id })
             .done(function() {
@@ -222,8 +228,6 @@ app.controller("asistenciaspasesCtrl", function ($scope, $http) {
 
 //Controlador para departamentos.
 app.controller("departamentosCtrl", function ($scope, $http) {
-    console.log("Se ha iniciado departamentosCtrl")
-
     function buscarDepartamentos() {
         $.get("/tbodyDepartamentos", function (trsHTML) {
             $("#tbodyDepartamentos").html(trsHTML)
@@ -237,12 +241,10 @@ app.controller("departamentosCtrl", function ($scope, $http) {
         .done(function () {
             buscarDepartamentos()
             $("#frmDepartamento")[0].reset()
-            $("#idDepartamento").val("")
+            $("#idDepartamento").val("") // Asumiendo que tienes un campo oculto con este id
         })
     })
 })
-
-
 
 const DateTime = luxon.DateTime
 let lxFechaHora
