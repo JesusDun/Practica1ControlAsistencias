@@ -187,6 +187,7 @@ def guardarAsistencia():
 # =========================================================================
 # MÓDULO ASISTENCIAS/PASES
 # =========================================================================
+
 @app.route("/asistenciaspases")
 def asistenciaspases():
     return render_template("asistenciaspases.html")
@@ -196,7 +197,8 @@ def tbodyAsistenciasPases():
     con = mysql.connector.connect(**db_config)
     cursor = con.cursor(dictionary=True)
     sql = """
-    SELECT AP.idAsistenciaPase, E.nombreEmpleado, A.fecha AS fechaAsistencia, AP.estado
+    SELECT 
+        AP.idAsistenciaPase, E.nombreEmpleado, A.fecha AS fechaAsistencia, AP.estado
     FROM asistenciaspases AS AP
     INNER JOIN empleados AS E ON E.idEmpleado = AP.idEmpleado
     INNER JOIN asistencias AS A ON A.idAsistencia = AP.idAsistencia
@@ -204,33 +206,77 @@ def tbodyAsistenciasPases():
     """
     cursor.execute(sql)
     registros = cursor.fetchall()
+    cursor.close()
     con.close()
     return render_template("tbodyAsistenciasPases.html", asistenciaspases=registros)
 
-# CORRECCIÓN: Se simplifica la lógica de guardar. El sistema de eventos no era funcional.
+# --- RUTA UNIFICADA PARA CREAR Y ACTUALIZAR ---
 @app.route("/asistenciapase", methods=["POST"])
 def guardarAsistenciaPase():
-    idEmpleado = request.form.get("idEmpleado")
-    idAsistencia = request.form.get("idAsistencia")
-    estado = request.form.get("estado")
+    try:
+        con = mysql.connector.connect(**db_config)
+        cursor = con.cursor()
+        
+        idAsistenciaPase = request.form.get("idAsistenciaPase")
+        idEmpleado = request.form["idEmpleado"]
+        idAsistencia = request.form["idAsistencia"]
+        estado = request.form["estado"]
 
-    con = mysql.connector.connect(**db_config)
-    cursor = con.cursor()
-    sql = "INSERT INTO asistenciaspases (idEmpleado, idAsistencia, estado) VALUES (%s, %s, %s)"
-    val = (idEmpleado, idAsistencia, estado)
-    cursor.execute(sql, val)
-    con.commit()
-    cursor.close()
-    con.close()
-    
-    # Aquí también podrías añadir una función pusher para actualizar en tiempo real
-    return make_response(jsonify({"status": "guardado"}))
+        if idAsistenciaPase:
+            # Lógica de Actualización
+            sql = """
+                UPDATE asistenciaspases 
+                SET idEmpleado = %s, idAsistencia = %s, estado = %s 
+                WHERE idAsistenciaPase = %s
+            """
+            val = (idEmpleado, idAsistencia, estado, idAsistenciaPase)
+        else:
+            # Lógica de Creación (Lanzando evento con Pusher como lo tenías)
+            pusher_client.trigger("canalPases", "eventoNuevoPase", {
+                "idEmpleado": idEmpleado,
+                "idAsistencia": idAsistencia,
+                "estado": estado
+            })
+            # Nota: La inserción real ocurre en manejarEventoPase
+            # Para un CRUD más directo, aquí iría el INSERT
+            sql = """
+                INSERT INTO asistenciaspases (idEmpleado, idAsistencia, estado) 
+                VALUES (%s, %s, %s)
+            """
+            val = (idEmpleado, idAsistencia, estado)
+
+        cursor.execute(sql, val)
+        con.commit()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+        cursor.close()
+        con.close()
+
+# --- RUTA PARA OBTENER DATOS DE UN PASE (PARA EDITAR) ---
+@app.route("/asistenciapase/<int:id>", methods=["GET"])
+def obtenerAsistenciaPase(id):
+    try:
+        con = mysql.connector.connect(**db_config)
+        cursor = con.cursor(dictionary=True)
+        sql = "SELECT * FROM asistenciaspases WHERE idAsistenciaPase = %s"
+        cursor.execute(sql, (id,))
+        pase = cursor.fetchone()
+        if pase:
+            return jsonify(pase)
+        return jsonify({"error": "Pase no encontrado"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        con.close()
 
 @app.route("/asistenciapase/eliminar", methods=["POST"])
 def eliminarAsistenciaPase():
-    id_pase = request.form.get("id")
     con = mysql.connector.connect(**db_config)
     cursor = con.cursor()
+    id_pase = request.form["id"]
     sql = "DELETE FROM asistenciaspases WHERE idAsistenciaPase = %s"
     val = (id_pase,)
     cursor.execute(sql, val)
