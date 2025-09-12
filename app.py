@@ -39,6 +39,9 @@ def pusherAsistencias():
 def pusherEmpleados():
     pusher_client.trigger("canalEmpleados", "eventoEmpleados", {"message": "La lista de empleados ha cambiado."})
 
+def pusherDepartamentos():
+    pusher_client.trigger("canalDepartamentos", "eventoDepartamentos", {"message": "La lista de empleados ha cambiado."})
+
 # =========================================================================
 # RUTAS BASE Y AUTENTICACIÓN
 # =========================================================================
@@ -324,5 +327,6 @@ def guardarDepartamento():
     con.commit()
     cursor.close()
     con.close()
+    pusherDepartamentos()
     
     return make_response(jsonify({"status": "success"}))
