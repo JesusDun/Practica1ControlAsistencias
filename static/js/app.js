@@ -143,67 +143,59 @@ app.controller("empleadosCtrl", function ($scope, $http) {
 app.controller("asistenciasCtrl", function ($scope, $http) {
     function buscarAsistencias() {
         $.get("/tbodyAsistencias", function (trsHTML) {
-            $("#tbodyAsistencias").html(trsHTML)
-        })
+            $("#tbodyAsistencias").html(trsHTML);
+        });
     }
-    buscarAsistencias()
+    buscarAsistencias();
     
     // Configuración de Pusher
-    Pusher.logToConsole = true
+    Pusher.logToConsole = true;
     var pusher = new Pusher("686124f7505c58418f23", { // Tu KEY
       cluster: "us2"
-    })
-    var channel = pusher.subscribe("canalAsistencias")
-    // Consumidor del evento: Llama a la función de búsqueda cuando hay un evento
+    });
+    var channel = pusher.subscribe("canalAsistencias");
     channel.bind("eventoAsistencias", function(data) {
-        buscarAsistencias()
-    })
-
-    $(document).on("submit", "#frmAsistencia", function (event) {
-        event.preventDefault()
-        // CREATE
-        $.post("/asistencia", $(this).serialize())
-    })
+        buscarAsistencias();
+    });
 
     // Botón de Editar
     $(document).on("click", ".btn-editar-asistencia", function () {
-    const id = $(this).data("id")
-    const fecha = $(this).data("fecha")
-    const comentarios = $(this).data("comentarios")
+        const id = $(this).data("id");
+        const fecha = $(this).data("fecha");
+        const comentarios = $(this).data("comentarios");
 
-    $("#txtFecha").val(fecha)
-    $("#txtComentarios").val(comentarios)
+        $("#txtFecha").val(fecha);
+        $("#txtComentarios").val(comentarios);
+        
+        // CORRECCIÓN: Toda la lógica de edición (incluyendo crear el input oculto)
+        // debe estar DENTRO del evento 'click'.
+        if ($("#hiddenId").length === 0) {
+            $("#frmAsistencia").append(`<input type="hidden" id="hiddenId" name="idAsistencia">`);
+        }
+        $("#hiddenId").val(id);
+    });
 
-    if ($("#hiddenId").length === 0) {
-        $("#frmAsistencia").append(`<input type="hidden" id="hiddenId" name="id">`)
-    }
-    $("#hiddenId").val(id)
-})
+    $(document).on("submit", "#frmAsistencia", function (event) {
+        event.preventDefault();
 
-    // Guarda el ID en un campo oculto para saber si es edición
-    if ($("#hiddenId").length === 0) {
-        $("#frmAsistencia").append(`<input type="hidden" id="hiddenId" name="id">`)
-    }
-    $("#hiddenId").val(id)
+        const id = $("#hiddenId").val();
+        // Si hay un ID en el campo oculto, es una edición. Si no, es una creación.
+        const url = id ? "/asistencia/editar" : "/asistencia";
 
-
-        // este ayuda a distinguir entre "crear" y "editar"
-        $(document).on("submit", "#frmAsistencia", function (event) {
-    event.preventDefault()
-
-    const id = $("#hiddenId").val()
-    const url = id ? "/asistencia/editar" : "/asistencia"
-
-    $.post(url, $(this).serialize())
-        .done(function () {
-            buscarAsistencias()
-            $("#frmAsistencia")[0].reset()
-            $("#hiddenId").remove() // Limpia el estado de edición
-        })
-})
-})
-})
-
+        $.post(url, $(this).serialize())
+            .done(function () {
+                buscarAsistencias();
+                $("#frmAsistencia")[0].reset();
+                // Si el campo oculto existe, lo eliminamos para dejar el form listo para crear.
+                if ($("#hiddenId").length > 0) {
+                    $("#hiddenId").remove();
+                }
+            })
+            .fail(function() {
+                alert("Hubo un error al guardar la asistencia.");
+            });
+    });
+});
 
 // Controlador para AsistenciasPases (N Capas)
 app.controller("asistenciaspasesCtrl", function ($scope, $http) {
