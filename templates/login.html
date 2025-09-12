@@ -1,44 +1,13 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Login</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-</head>
-<body>
-    <h2>Iniciar Sesión</h2>
-    <form id="frmInicioSesion">
-        <label for="txtUsuario">Usuario:</label>
-        <input type="text" id="txtUsuario" name="txtUsuario" required><br><br>
-
-        <label for="txtContrasena">Contraseña:</label>
-        <input type="password" id="txtContrasena" name="txtContrasena" required><br><br>
-
-        <button type="submit">Entrar</button>
-    </form>
-
-    <script>
-    $(document).ready(function(){
-        $("#frmInicioSesion").on("submit", function(e){
-            e.preventDefault();
-            $.ajax({
-                url: "/iniciarSesion",
-                type: "POST",
-                data: $(this).serialize(),
-                success: function(res){
-                    if(res.status === "ok"){
-                        alert(res.mensaje);
-                        window.location.href = "/"; // redirige al index
-                    } else {
-                        alert(res.mensaje);
-                    }
-                },
-                error: function(err){
-                    alert("Error al iniciar sesión");
-                }
-            });
-        });
-    });
-    </script>
-</body>
-</html>
+<form method="post" id="frmInicioSesion"> 
+    <div class="mb-1"> 
+        <label for="txtUsuario">Usuario:</label> 
+        <input type="text" id="txtUsuario" name="txtUsuario" class="form-control"> 
+    </div> 
+    <div class="mb-1"> 
+        <label for="txtContrasena">Contraseñaa:</label> 
+        <input type="password" id="txtContrasena" name="txtContrasena" class="form-control"> 
+    </div> 
+    <div class="mb-1 text-end"> 
+        <button class="btn btn-primary">Iniciar Sesión</button> 
+    </div> 
+</form>
