@@ -70,8 +70,20 @@ def iniciarSesion():
 
 @app.route("/empleados")
 def empleados():
-    return render_template("empleados.html")
-
+    # para poderla pasar al formulario.
+    con = mysql.connector.connect(**db_config)
+    cursor = con.cursor(dictionary=True)
+    
+    # Consulta para obtener todos los departamentos
+    cursor.execute("SELECT idDepartamento, NombreDepartamento FROM departamento ORDER BY NombreDepartamento ASC")
+    departamentos = cursor.fetchall()
+    
+    cursor.close()
+    con.close()
+    
+    # Pasamos la lista de departamentos a la plantilla
+    return render_template("empleados.html", departamentos=departamentos)
+    
 @app.route("/tbodyEmpleados")
 def tbodyEmpleados():
     con = mysql.connector.connect(**db_config)
