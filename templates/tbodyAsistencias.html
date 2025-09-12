@@ -1,8 +1,10 @@
 {% for asistencia in asistencias %}
 <tr>
-    <td>{{ asistencia.idAsistencia }}</td>
-    <td>{{ asistencia.fecha }}</td>
-    <td>{{ asistencia.comentarios }}</td>
-    <button class="btn btn-sm btn-warning btn-editar-asistencia"data-id="1"data-fecha="2025-09-10"data-comentarios="Reunión de equipo">Editar</button>
+  <td>{{ asistencia.idAsistencia }}</td>
+  <td>{{ asistencia.fecha }}</td>
+  <td>{{ asistencia.comentarios }}</td>
+  <td>
+    <button class="btn btn-sm btn-warning btn-editar-asistencia"data-id="{{ asistencia.idAsistencia }}"data-fecha="{{ asistencia.fecha }}"data-comentarios="{{ asistencia.comentarios }}">Editar</button>
+  </td>
 </tr>
 {% endfor %}
