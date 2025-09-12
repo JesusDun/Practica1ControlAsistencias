@@ -82,14 +82,13 @@ app.run(["$rootScope", "$location", "$timeout", function($rootScope, $location, 
 app.controller("appCtrl", function ($scope, $http) {
     $("#frmInicioSesion").submit(function (event) {
         event.preventDefault()
-
         $.post("/iniciarSesion", $(this).serialize(), function (respuesta) {
-            if (respuesta.status === "ok") {
-                // Redirigir a Empleados usando AngularJS hash
+            if (respuesta.length) {
+                alert("Iniciaste Sesión")
                 window.location = "/#/empleados"
-            } else {
-                alert(respuesta.mensaje || "Usuario y/o Contraseña Incorrecto(s)")
+                return
             }
+            alert("Usuario y/o Contraseña Incorrecto(s)")
         })
     })
 })
