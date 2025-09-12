@@ -232,3 +232,6 @@ def eliminarAsistenciaPase():
 # MÓDULO DEPARTAMENTOS
 # =========================================================================
 
+@app.route("/departamentos")
+def departamentos():
+    return render_template("departamentos.html")
