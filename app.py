@@ -40,13 +40,35 @@ def pusherAsistencias():
 app.secret_key = "pruebaLLaveSecreta_123"
 
 # =========================================================================
-# BASE
+# RUTAS BASE
 # =========================================================================
+
 @app.route("/")
-def login():
-    if "idUsuario" in session:
-        return redirect(url_for("index"))
+def index():
+    return render_template("index.html")
+
+@app.route("/app")
+def app2():
     return render_template("login.html")
+
+@app.route("/iniciarSesion", methods=["POST"])
+def iniciarSesion():
+    con = mysql.connector.connect(**db_config)
+    cursor = con.cursor(dictionary=True)
+
+    usuario    = request.form["txtUsuario"]
+    contrasena = request.form["txtContrasena"]
+
+    sql    = "SELECT Id_Usuario FROM usuarios WHERE Nombre_Usuario = %s AND Contrasena = %s"
+    val    = (usuario, contrasena)
+
+    cursor.execute(sql, val)
+    registros = cursor.fetchall()
+
+    cursor.close()
+    con.close()
+
+    return make_response(jsonify(registros))
 # =========================================================================
 # MÓDULO EMPLEADOS
 # =========================================================================
