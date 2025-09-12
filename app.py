@@ -3,11 +3,13 @@
 # activate.bat
 # py -m ensurepip --upgrade
 # pip install -r requirements.txt
+# pip install bcrypt
 
 from flask import Flask, render_template, request, jsonify, make_response
 import mysql.connector
 from flask_cors import CORS, cross_origin
 import pusher
+import bcrypt
 
 # Configuración de la base de datos
 db_config = {
@@ -47,22 +49,31 @@ def app2():
 
 @app.route("/iniciarSesion", methods=["POST"])
 def iniciarSesion():
+    usuario_ingresado = request.form.get("txtUsuario")
+    contrasena_ingresada = request.form.get("txtContrasena")
+
+    if not usuario_ingresado or not contrasena_ingresada:
+        return make_response(jsonify([]), 400) # Datos incompletos
+
     con = mysql.connector.connect(**db_config)
     cursor = con.cursor(dictionary=True)
     
-    usuario    = request.form["txtUsuario"]
-    contrasena = request.form["txtContrasena"]
-    
-    sql    = "SELECT Id_Usuario FROM usuarios WHERE Nombre_Usuario = %s AND Contrasena = %s"
-    val    = (usuario, contrasena)
-
-    cursor.execute(sql, val)
-    registros = cursor.fetchall()
-    
-    cursor.close()
+    # Corregido: La columna se llama 'username', no 'Nombre_Usuario'
+    sql = "SELECT idUsuario, password FROM usuarios WHERE username = %s"
+    cursor.execute(sql, (usuario_ingresado,))
+    registro_usuario = cursor.fetchone()
     con.close()
-    
-    return make_response(jsonify(registros))
+
+    usuario_encontrado = None
+    if registro_usuario:
+        hash_guardado = registro_usuario['password'].encode('utf-8')
+        contrasena_ingresada_bytes = contrasena_ingresada.encode('utf-8')
+
+        # Usamos bcrypt para comparar de forma segura
+        if bcrypt.checkpw(contrasena_ingresada_bytes, hash_guardado):
+            usuario_encontrado = [{"Id_Usuario": registro_usuario['idUsuario']}]
+
+    return make_response(jsonify(usuario_encontrado or []))
 
 # =========================================================================
 # MÓDULO EMPLEADOS
@@ -235,3 +246,17 @@ def eliminarAsistenciaPase():
 @app.route("/departamentos")
 def departamentos():
     return render_template("departamentos.html")
+
+@app.route("/tbodyDepartamentos")
+def tbodyDepartamentos():
+    con = mysql.connector.connect(**db_config)
+    cursor = con.cursor(dictionary=True)
+    
+    sql = "SELECT idDepartamento, NombreDepartamento, Edificio, Descripcion FROM departamento ORDER BY idDepartamento DESC"
+    cursor.execute(sql)
+    registros = cursor.fetchall()
+    
+    cursor.close()
+    con.close()
+    
+    return render_template("tbodyDepartamentos.html", departamentos=registros)
