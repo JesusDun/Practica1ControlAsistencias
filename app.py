@@ -247,15 +247,48 @@ def eliminarAsistenciaPase():
 def departamentos():
     return render_template("departamentos.html")
 
+
+@app.route("/departamento", methods=["POST"])
+def guardarDepartamento():
+    con = mysql.connector.connect(**db_config)
+    cursor = con.cursor()
+
+    idDepartamento     = request.form.get("idDepartamento", "")
+    nombreDepartamento = request.form["txtNombreDepartamento"]
+    edificio           = request.form["txtEdificio"]
+    descripcion        = request.form["txtDescripcion"]
+
+    if idDepartamento:  
+        sql = """
+            UPDATE departamento
+            SET NombreDepartamento = %s, Edificio = %s, Descripcion = %s
+            WHERE idDepartamento = %s
+        """
+        val = (nombreDepartamento, edificio, descripcion, idDepartamento)
+    else:
+        sql = """
+            INSERT INTO departamento (NombreDepartamento, Edificio, Descripcion)
+            VALUES (%s, %s, %s)
+        """
+        val = (nombreDepartamento, edificio, descripcion)
+
+    cursor.execute(sql, val)
+    con.commit()
+
+    cursor.close()
+    con.close()
+
+    return jsonify({"status": "success"})
+
 @app.route("/tbodyDepartamentos")
 def tbodyDepartamentos():
     con = mysql.connector.connect(**db_config)
     cursor = con.cursor(dictionary=True)
-    
-    sql = "SELECT idDepartamento, NombreDepartamento, Edificio, Descripcion FROM departamento ORDER BY idDepartamento DESC"
+
+    sql    = "SELECT idDepartamento, NombreDepartamento, Edificio, Descripcion FROM departamento ORDER BY idDepartamento DESC"
     cursor.execute(sql)
     registros = cursor.fetchall()
-    
+
     cursor.close()
     con.close()
     
