@@ -249,13 +249,13 @@ app.controller("asistenciaspasesCtrl", function ($scope, $http) {
     $(document).on("click", ".btn-editar-pase", function () {
         const id = $(this).data("id");
         const idEmpleado = $(this).data("idempleado");
-        const fecha = $(this).data("fechaasistencia");
+        const idAsistencia = $(this).data("idasistencia"); // <-- OBTENEMOS idAsistencia
         const estado = $(this).data("estado");
 
         // Rellenamos el formulario con los datos del pase a editar
         $("#idAsistenciaPase").val(id);
         $("#selIdEmpleado").val(idEmpleado);
-        $("#txtFechaAsistencia").val(fecha);
+        $("#selIdAsistencia").val(idAsistencia); // <-- SELECCIONAMOS LA ASISTENCIA
         $("#selEstado").val(estado);
     });
     
