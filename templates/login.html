@@ -1,13 +1,66 @@
-<form method="post" action="/IniciarSesion" id="frmInicioSesion"> 
-    <div class="mb-1"> 
-        <label for="txtUsuario">Usuario:</label> 
-        <input type="text" id="txtUsuario" name="txtUsuario" class="form-control"> 
-    </div> 
-    <div class="mb-1"> 
-        <label for="txtContrasena">Contraseña:</label> 
-        <input type="password" id="txtContrasena" name="txtContrasena" class="form-control"> 
-    </div> 
-    <div class="mb-1 text-end"> 
-        <button class="btn btn-primary">Iniciar Sesión</button> 
-    </div> 
-</form>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <style>
+        body {
+            background: linear-gradient(to right, #4e54c8, #8f94fb);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .login-card {
+            background-color: #fff;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 400px;
+        }
+        .login-card h2 {
+            margin-bottom: 1.5rem;
+            text-align: center;
+            color: #4e54c8;
+        }
+        .btn-primary {
+            background-color: #4e54c8;
+            border-color: #4e54c8;
+        }
+        .btn-primary:hover {
+            background-color: #3b3f99;
+            border-color: #3b3f99;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <h2>Iniciar Sesión</h2>
+        <form method="post" action="/iniciarSesion" id="frmInicioSesion">
+            <div class="mb-3">
+                <label for="txtUsuario" class="form-label">Usuario</label>
+                <input type="text" id="txtUsuario" name="txtUsuario" class="form-control" placeholder="Ingrese su usuario" required>
+            </div>
+            <div class="mb-3">
+                <label for="txtContrasena" class="form-label">Contraseña</label>
+                <input type="password" id="txtContrasena" name="txtContrasena" class="form-control" placeholder="Ingrese su contraseña" required>
+            </div>
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary btn-block">Iniciar Sesión</button>
+            </div>
+        </form>
+        <p class="text-center mt-3 text-muted">© 2025 Tu Empresa</p>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+</body>
+</html>
