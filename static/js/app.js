@@ -163,6 +163,7 @@ app.controller("asistenciasCtrl", function ($scope, $http) {
         const id = $(this).data("id");
         const fecha = $(this).data("fecha");
         const comentarios = $(this).data("comentarios");
+        const url = id ? "/asistencia/actualizar" : "/asistencia";
 
         $("#txtFecha").val(fecha);
         $("#txtComentarios").val(comentarios);
