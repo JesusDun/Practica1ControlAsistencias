@@ -49,8 +49,8 @@ def login():
         return redirect(url_for("index"))
     return render_template("login.html")
 
-@app.route("/IniciarSesion", methods=["POST"])
-def IniciarSesion():
+@app.route("/iniciarSesion", methods=["POST"])
+def iniciarSesion():
     usuario_ingresado = request.form.get("txtUsuario")
     contrasena_ingresada = request.form.get("txtContrasena")
 
