@@ -80,17 +80,14 @@ app.run(["$rootScope", "$location", "$timeout", function($rootScope, $location, 
 
 // Controlador para Login
 app.controller("appCtrl", function ($scope, $http) {
-    $("#frmInicioSesion").submit(function (event) {
-        event.preventDefault()
-        $.post("/iniciarSesion", $(this).serialize(), function (respuesta) {
-            if (respuesta.length) {
-                alert("Iniciaste Sesión")
-                window.location = "/#/empleados"
-                return
-            }
-            alert("Usuario y/o Contraseña Incorrecto(s)")
-        })
-    })
+    $.post("/iniciarSesion", $(this).serialize(), function (respuesta) {
+        if (respuesta.status === "ok") {
+            // Redirige manualmente
+            window.location.href = "/index";
+        } else {
+            alert(respuesta.msg);
+        }
+    });
 })
 
 // Controlador para Empleados
