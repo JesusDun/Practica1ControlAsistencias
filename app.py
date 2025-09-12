@@ -79,8 +79,6 @@ def iniciarSesion():
         print(f"Error en el inicio de sesión: {e}") 
         return jsonify({"status": "error", "message": "Error interno del servidor"}), 500
 
-    return jsonify({"status": "error", "message": "Usuario o contraseña incorrectos"}), 401
-
 # =========================================================================
 # MÓDULO EMPLEADOS
 # =========================================================================
