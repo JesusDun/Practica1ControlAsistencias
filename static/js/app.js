@@ -79,19 +79,25 @@ app.run(["$rootScope", "$location", "$timeout", function($rootScope, $location, 
 }])
 
 // Controlador para Login
-app.controller("appCtrl", function ($scope, $http) {
+app.controller("appCtrl", function ($scope, $http, $window) {
     $("#frmInicioSesion").submit(function (event) {
         event.preventDefault()
-        $.post("/iniciarSesion", $(this).serialize(), function (respuesta) {
-            if (respuesta.length) {
-                alert("Iniciaste Sesión")
-                window.location = "/#/empleados"
-                return
-            }
-            alert("Usuario y/o Contraseña Incorrecto(s)")
-        })
-    })
-})
+        $.post("/iniciarSesion", $(this).serialize())
+            .done(function (respuesta) {
+                if (respuesta.status === "success") {
+                    alert("Iniciaste Sesión")
+                    $window.location.href = respuesta.redirect_url
+                } else {
+                    alert(respuesta.message || "Usuario y/o Contraseña Incorrecto(s)")
+                }
+            })
+            .fail(function (xhr) {
+                // Manejar errores de servidor (ej. 400 o 401)
+                const respuesta = xhr.responseJSON;
+                alert(respuesta.message || "Hubo un problema. Inténtalo de nuevo.");
+            });
+    });
+});
 
 // Controlador para Empleados
 app.controller("empleadosCtrl", function ($scope, $http) {
