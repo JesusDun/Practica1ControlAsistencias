@@ -46,7 +46,7 @@ app.secret_key = "pruebaLLaveSecreta_123"
 @app.route("/")
 def login():
     if "idUsuario" in session:
-        return redirect(url_for("index"))
+    return redirect(url_for("index"))
     return render_template("login.html")
 
 @app.route("/iniciarSesion", methods=["POST"])
