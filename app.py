@@ -285,7 +285,7 @@ def tbodyDepartamentos():
     con = mysql.connector.connect(**db_config)
     cursor = con.cursor(dictionary=True)
 
-    sql    = "SELECT idDepartamento, NombreDepartamento, Edificio, Descripcion FROM departamento ORDER BY idDepartamento DESC"
+    sql = "SELECT idDepartamento, NombreDepartamento, Edificio, Descripcion FROM departamento ORDER BY idDepartamento DESC"
     cursor.execute(sql)
     registros = cursor.fetchall()
 
