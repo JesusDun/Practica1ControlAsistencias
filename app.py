@@ -59,7 +59,7 @@ def iniciarSesion():
     usuario    = request.form["txtUsuario"]
     contrasena = request.form["txtContrasena"]
 
-    sql    = "SELECT Id_Usuario FROM usuarios WHERE Nombre_Usuario = %s AND Contrasena = %s"
+    sql    = "SELECT idUsuario FROM usuarios WHERE username = %s AND password = %s"
     val    = (usuario, contrasena)
 
     cursor.execute(sql, val)
