@@ -175,25 +175,20 @@ app.controller("asistenciasCtrl", function ($scope, $http) {
         $("#hiddenId").val(id);
     });
 
-    $(document).on("submit", "#frmAsistencia", function (event) {
-        event.preventDefault();
+    $(document).off("submit", "#frmAsistencia").on("submit", "#frmAsistencia", function (event) {
+    event.preventDefault();
+    const id = $("#hiddenId").val();
+    const url = id ? "/asistencia/editar" : "/asistencia";
 
-        const id = $("#hiddenId").val();
-        // Si hay un ID en el campo oculto, es una edición. Si no, es una creación.
-        const url = id ? "/asistencia/editar" : "/asistencia";
-
-        $.post(url, $(this).serialize())
-            .done(function () {
-                buscarAsistencias();
-                $("#frmAsistencia")[0].reset();
-                // Si el campo oculto existe, lo eliminamos para dejar el form listo para crear.
-                if ($("#hiddenId").length > 0) {
-                    $("#hiddenId").remove();
-                }
-            })
-            .fail(function() {
-                alert("Hubo un error al guardar la asistencia.");
-            });
+    $.post(url, $(this).serialize())
+        .done(function () {
+            buscarAsistencias();
+            $("#frmAsistencia")[0].reset();
+            $("#hiddenId").remove();
+        })
+        .fail(function () {
+            alert("Hubo un error al guardar la asistencia.");
+        });
     });
 });
 
