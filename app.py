@@ -51,8 +51,8 @@ def login():
 
 @app.route("/iniciarSesion", methods=["POST"])
 def iniciarSesion():
-    usuario_ingresado = request.form("txtUsuario")
-    contrasena_ingresada = request.form("txtContrasena")
+    usuario_ingresado = request.form["txtUsuario"]
+    contrasena_ingresada = request.form["txtContrasena"]
 
     if not usuario_ingresado or not contrasena_ingresada:
         return "Datos incompletos", 400
