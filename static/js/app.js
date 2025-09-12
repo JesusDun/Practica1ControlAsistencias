@@ -93,7 +93,7 @@ app.controller("appCtrl", function ($scope, $http) {
     })
 })
 
-// Controlador para Empleados (N Capas)
+// Controlador para Empleados
 app.controller("empleadosCtrl", function ($scope, $http) {
     function buscarEmpleados() {
         $.get("/tbodyEmpleados", function (trsHTML) {
@@ -102,34 +102,42 @@ app.controller("empleadosCtrl", function ($scope, $http) {
     }
     buscarEmpleados()
 
+    // Evento para enviar el formulario (Crea o Actualiza)
     $(document).on("submit", "#frmEmpleado", function (event) {
-        event.preventDefault()
-        // CREATE/UPDATE
+        event.preventDefault();
+        
         $.post("/empleado", $(this).serialize())
-        .done(function() {
-            buscarEmpleados();
-            $("#frmEmpleado")[0].reset(); // Limpia el formulario
-            $("#idEmpleado").val(""); // Asegura que el ID oculto se limpie
-        })
-    })
+            .done(function() {
+                buscarEmpleados();
+                
+                // IMPORTANTE: Limpiar el formulario después de guardar.
+                // Esto resetea todos los campos y vacía el ID oculto,
+                // dejando el formulario listo para un nuevo registro.
+                $("#frmEmpleado")[0].reset();
+                $("#idEmpleado").val(""); 
+            })
+            .fail(function(response) {
+                // Muestra un error si algo sale mal en el servidor.
+                alert("Error al guardar: " + response.responseJSON.error);
+            });
+    });
 
-    // MODIFICACIÓN: Se añade la lógica para el botón de editar.
+    // Evento para el botón "Editar" (Llena el formulario)
     $(document).on("click", ".btn-editar-empleado", function () {
-        // Se obtienen todos los datos del botón
         const id = $(this).data("id");
         const nombre = $(this).data("nombre");
         const numero = $(this).data("numero");
         const fecha = $(this).data("fecha");
         const idDepartamento = $(this).data("iddepartamento");
 
-        // Se llenan los campos del formulario con los datos obtenidos
+        // Llenamos todos los campos del formulario, incluyendo el ID oculto.
         $("#idEmpleado").val(id);
         $("#txtNombreEmpleado").val(nombre);
         $("#txtNumero").val(numero);
         $("#txtFechaIngreso").val(fecha);
-        $("#txtIdDepartamento").val(idDepartamento);
+        $("#selIdDepartamento").val(idDepartamento);
     });
-})
+});
 
 // Controlador para Asistencias (Dirigida por Eventos)
 app.controller("asistenciasCtrl", function ($scope, $http) {
