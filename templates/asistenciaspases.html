@@ -5,8 +5,8 @@
         <select class="form-select" id="selIdEmpleado" name="idEmpleado" required>
             <option value="" selected disabled>-- Selecciona un Empleado --</option>
             
-            {% for pase in asistenciaspases %}
-            <option value="{{ pase.idEmpleado }}">{{ pase.idEmpleado }}</option>
+            {% for empleado in empleados %}
+            <option value="{{ empleado.idEmpleado }}">{{ empleado.nombreEmpleado }}</option>
             {% endfor %}
         </select>
     </div>
