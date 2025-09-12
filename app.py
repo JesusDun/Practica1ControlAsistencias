@@ -202,26 +202,6 @@ def guardarAsistencia():
     pusherAsistencias()
     return make_response(jsonify({}))
 
-    @app.route("/asistencia/editar", methods=["POST"])
-def editarAsistencia():
-    if not con.is_connected():
-        con.reconnect()
-
-    idAsistencia = request.form["idAsistencia"]
-    fecha        = request.form["fecha"]
-    comentarios  = request.form["comentarios"]
-
-    cursor = con.cursor()
-    sql = "UPDATE asistencias SET fecha = %s, comentarios = %s WHERE idAsistencia = %s"
-    val = (fecha, comentarios, idAsistencia)
-
-    cursor.execute(sql, val)
-    con.commit()
-    con.close()
-
-    pusherAsistencias()  # Notifica al frontend
-    return make_response(jsonify({}))
-
 # =========================================================================
 # MÓDULO ASISTENCIASPASES (Arquitectura: Dirigida a Eventos)
 # En Pases de Asistencia, en lugar de ejecutarse directamente el CRUD, todo pasa por eventos que desencadenan las operaciones.
