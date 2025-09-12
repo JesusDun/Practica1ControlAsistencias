@@ -206,25 +206,72 @@ app.controller("asistenciasCtrl", function ($scope, $http) {
     });
 });
 
-// Controlador para AsistenciasPases (N Capas)
+// =========================================================================
+// MODIFICACIÓN: Controlador para AsistenciasPases (Corregido y con Pusher)
+// =========================================================================
 app.controller("asistenciaspasesCtrl", function ($scope, $http) {
     function buscarAsistenciasPases() {
         $.get("/tbodyAsistenciasPases", function (trsHTML) {
-            $("#tbodyAsistenciasPases").html(trsHTML)
-        })
+            $("#tbodyAsistenciasPases").html(trsHTML);
+        });
     }
-    buscarAsistenciasPases()
 
-    $(document).on("click", ".btn-eliminar-pase", function (event) {
-        const id = $(this).data("id")
+    // --- Lógica de Pusher para tiempo real ---
+    Pusher.logToConsole = true;
+    var pusher = new Pusher("686124f7505c58418f23", { // Tu KEY
+        cluster: "us2"
+    });
+    var channel = pusher.subscribe("canalAsistenciasPases"); // Canal específico para pases
+    channel.bind("eventoAsistenciasPases", function(data) {
+        console.log("Evento Pusher recibido para pases, actualizando tabla...");
+        buscarAsistenciasPases(); // Recargamos la tabla cuando hay un cambio
+    });
+
+    // Carga inicial de datos
+    buscarAsistenciasPases();
+
+    // --- Lógica de Formulario para Guardar y Editar ---
+    $(document).off("submit", "#frmAsistenciasPase").on("submit", "#frmAsistenciasPase", function (event) {
+        event.preventDefault();
+
+        $.post("/asistenciapase", $(this).serialize())
+            .done(function() {
+                // Pusher se encarga de actualizar, solo limpiamos el formulario.
+                $("#frmAsistenciasPase")[0].reset();
+                $("#idAsistenciaPase").val("");
+            })
+            .fail(function(response) {
+                alert("Error al guardar el pase: " + (response.responseJSON ? response.responseJSON.error : "Error desconocido"));
+            });
+    });
+
+    // --- Evento para el botón "Editar" ---
+    $(document).on("click", ".btn-editar-pase", function () {
+        const id = $(this).data("id");
+        const idEmpleado = $(this).data("idempleado");
+        const fecha = $(this).data("fechaasistencia");
+        const estado = $(this).data("estado");
+
+        // Rellenamos el formulario con los datos del pase a editar
+        $("#idAsistenciaPase").val(id);
+        $("#selIdEmpleado").val(idEmpleado);
+        $("#txtFechaAsistencia").val(fecha);
+        $("#selEstado").val(estado);
+    });
+    
+    // --- Evento para el botón "Eliminar" (sin cambios, pero es bueno tenerlo aquí) ---
+     $(document).on("click", ".btn-eliminar-pase", function (event) {
+        const id = $(this).data("id");
         if (confirm(`¿Estás seguro de eliminar el pase #${id}?`)) {
             $.post("/asistenciapase/eliminar", { id: id })
-            .done(function() {
-                buscarAsistenciasPases();
-            })
+             .fail(function(response) {
+                alert("Error al eliminar el pase.");
+            });
+            // No es necesario llamar a buscarAsistenciasPases() aquí,
+            // Pusher se encargará de actualizar la tabla.
         }
-    })
-})
+    });
+});
 
 //Controlador para departamentos.
 app.controller("departamentosCtrl", function ($scope, $http) {
