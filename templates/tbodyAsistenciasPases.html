@@ -4,8 +4,19 @@
     <td>{{ pase.nombreEmpleado }}</td>
     <td>{{ pase.fechaAsistencia }}</td>
     <td>{{ pase.estado }}</td>
-    <td>
-        <button class="btn btn-danger btn-sm btn-eliminar-pase" data-id="{{ pase.idAsistenciaPase }}">Eliminar</button>
+    <td class="text-end">
+        <button class="btn btn-warning btn-sm btn-editar-pase"
+                data-id="{{ pase.idAsistenciaPase }}"
+                data-idempleado="{{ pase.idEmpleado }}"
+                data-fechaasistencia="{{ pase.fechaAsistencia }}"
+                data-estado="{{ pase.estado }}">
+            Editar
+        </button>
+
+        <button class="btn btn-danger btn-sm btn-eliminar-pase" 
+                data-id="{{ pase.idAsistenciaPase }}">
+            Eliminar
+        </button>
     </td>
 </tr>
 {% endfor %}
