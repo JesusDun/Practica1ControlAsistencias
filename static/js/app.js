@@ -81,29 +81,19 @@ app.run(["$rootScope", "$location", "$timeout", function($rootScope, $location, 
 // Controlador para Login
 app.controller("appCtrl", function ($scope, $http, $window) {
     $("#frmInicioSesion").submit(function (event) {
-        event.preventDefault();
-        
+        event.preventDefault()
         $.post("/iniciarSesion", $(this).serialize())
             .done(function (respuesta) {
-                // Si el backend devuelve un 200, pero la respuesta es un error
-                if (respuesta.error) {
-                    alert(respuesta.error);
-                }
-                // Si la respuesta es exitosa (login correcto)
-                else if (Array.isArray(respuesta) && respuesta.length > 0) {
-                    alert("Iniciaste Sesión");
-                    $window.location.href = '#/empleados'; // Redirección
+                // Asumiendo que el backend ahora devuelve un array (vacío si falla, con datos si tiene éxito)
+                if (Array.isArray(respuesta) && respuesta.length > 0) {
+                    alert("Iniciaste Sesión")
+                    $window.location.href = '#/empleados'; // Redirección AngularJS
+                } else {
+                    alert("Usuario y/o Contraseña Incorrecto(s)")
                 }
             })
-            .fail(function (xhr, status, error) {
-                // Si el backend devuelve un código de error (400, 401, 500)
-                try {
-                    const responseData = JSON.parse(xhr.responseText);
-                    alert(responseData.error || "Error desconocido en el servidor.");
-                } catch (e) {
-                    alert("Hubo un problema con el servidor. Inténtalo de nuevo.");
-                    console.error("Error al analizar la respuesta del servidor:", e);
-                }
+            .fail(function () {
+                alert("Hubo un problema con el servidor. Inténtalo de nuevo.");
             });
     });
 });
