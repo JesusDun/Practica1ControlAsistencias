@@ -59,32 +59,47 @@ def app2():
 
 @app.route("/iniciarSesion", methods=["POST"])
 def iniciarSesion():
-    # CORRECCIÓN CRÍTICA: Se implementa el inicio de sesión seguro con bcrypt.
-    usuario_ingresado = request.form.get("txtUsuario")
-    contrasena_ingresada = request.form.get("txtContrasena")
+    con = None
+    cursor = None
+    try:
+        usuario_ingresado = request.form.get("txtUsuario")
+        contrasena_ingresada = request.form.get("txtContrasena")
 
-    if not usuario_ingresado or not contrasena_ingresada:
-        return make_response(jsonify([]), 400) # Evita errores si los campos están vacíos
+        if not usuario_ingresado or not contrasena_ingresada:
+            return make_response(jsonify({"error": "Usuario y/o contraseña faltantes."}), 400)
 
-    con = mysql.connector.connect(**db_config)
-    cursor = con.cursor(dictionary=True)
-    
-    # 1. Se busca al usuario por su nombre de usuario
-    sql = "SELECT idUsuario, password FROM usuarios WHERE username = %s"
-    cursor.execute(sql, (usuario_ingresado,))
-    registro_usuario = cursor.fetchone()
-    con.close()
+        con = mysql.connector.connect(**db_config)
+        cursor = con.cursor(dictionary=True)
+        
+        sql = "SELECT idUsuario, password FROM usuarios WHERE username = %s"
+        cursor.execute(sql, (usuario_ingresado,))
+        registro_usuario = cursor.fetchone()
 
-    usuario_encontrado = None
-    if registro_usuario:
-        hash_guardado = registro_usuario['password'].encode('utf-8')
-        contrasena_ingresada_bytes = contrasena_ingresada.encode('utf-8')
+        usuario_encontrado = None
+        if registro_usuario and registro_usuario['password']:
+            hash_guardado = registro_usuario['password'].encode('utf-8')
+            contrasena_ingresada_bytes = contrasena_ingresada.encode('utf-8')
 
-        # 2. Se compara la contraseña ingresada con el hash de la BD
-        if bcrypt.checkpw(contrasena_ingresada_bytes, hash_guardado):
-            usuario_encontrado = [{"Id_Usuario": registro_usuario['idUsuario']}]
+            if bcrypt.checkpw(contrasena_ingresada_bytes, hash_guardado):
+                usuario_encontrado = [{"Id_Usuario": registro_usuario['idUsuario']}]
+        
+        if usuario_encontrado:
+            return make_response(jsonify(usuario_encontrado), 200)
+        else:
+            return make_response(jsonify({"error": "Usuario y/o Contraseña Incorrecto(s)"}), 401)
 
-    return make_response(jsonify(usuario_encontrado or []))
+    except mysql.connector.Error as err:
+        # Esto captura errores de la base de datos (por ejemplo, mala conexión)
+        return make_response(jsonify({"error": f"Error de base de datos: {err}"}), 500)
+    except Exception as e:
+        # Esto captura cualquier otro error inesperado
+        return make_response(jsonify({"error": f"Hubo un error en el servidor: {e}"}), 500)
+    finally:
+        # Asegura que el cursor y la conexión se cierren
+        if cursor:
+            cursor.close()
+        if con and con.is_connected():
+            con.close()
 
 # =========================================================================
 # MÓDULO EMPLEADOS
