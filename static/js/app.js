@@ -85,24 +85,21 @@ app.controller("appCtrl", function ($scope, $http, $window) {
         
         $.post("/iniciarSesion", $(this).serialize())
             .done(function (respuesta) {
-                // Si el backend devuelve un 200, pero la respuesta es un error
                 if (respuesta.error) {
                     alert(respuesta.error);
                 }
                 // Si la respuesta es exitosa (login correcto)
                 else if (Array.isArray(respuesta) && respuesta.length > 0) {
-                    alert("Iniciaste Sesión");
-                    $window.location.href = '#/empleados'; // Redirección
+                    alert("Iniciaste Sesión Correctamente");
+                    $window.location.href = '/empleados'; // Redirección
                 }
             })
             .fail(function (xhr, status, error) {
-                // Si el backend devuelve un código de error (400, 401, 500)
                 try {
                     const responseData = JSON.parse(xhr.responseText);
                     alert(responseData.error || "Error desconocido en el servidor.");
                 } catch (e) {
                     alert("Hubo un problema con el servidor. Inténtalo de nuevo.");
-                    console.error("Error al analizar la respuesta del servidor:", e);
                 }
             });
     });
