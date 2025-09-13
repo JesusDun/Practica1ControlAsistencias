@@ -300,9 +300,9 @@ def tbodyDepartamentos():
 @app.route("/departamento", methods=["POST"])
 def guardarDepartamento():
     idDepartamento = request.form.get("idDepartamento")
-    nombre = request.form.get("nombreDepartamento")
-    edificio = request.form.get("edificio")
-    descripcion = request.form.get("descripcion")
+    nombre = request.form.get("txtNombreDepartamento")
+    edificio = request.form.get("txtEdificio")
+    descripcion = request.form.get("txtDescripcion")
 
     con = mysql.connector.connect(**db_config)
     cursor = con.cursor()
