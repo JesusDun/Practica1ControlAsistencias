@@ -15,7 +15,7 @@
         <select class="form-select" id="selIdAsistencia" name="idAsistencia" required>
             <option value="" selected disabled>-- Selecciona una Fecha de Asistencia --</option>
             {% for asistencia in asistencias %}
-            <option value="{{ asistencia.idAsistencia }}">{{ asistencia.fecha }}</option>
+            <option value="{{ asistencia.idAsistencia }}">{{ asistencia.fecha }} - ({{ asistencia.comentarios }})</option>
             {% endfor %}
         </select>
     </div>
