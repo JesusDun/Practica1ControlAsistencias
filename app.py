@@ -1,4 +1,3 @@
-
 # python.exe -m venv .venv
 # cd .venv/Scripts
 # activate.bat
