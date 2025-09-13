@@ -205,7 +205,7 @@ def asistenciaspases():
     empleados = cursor.fetchall()
     
     # Obtener asistencias (fechas)
-    cursor.execute("SELECT idAsistencia, fecha FROM asistencias ORDER BY fecha DESC")
+    cursor.execute("SELECT idAsistencia, fecha, comentarios FROM asistencias ORDER BY fecha DESC")
     asistencias = cursor.fetchall()
     
     con.close()
