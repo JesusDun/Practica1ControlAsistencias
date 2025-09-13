@@ -76,12 +76,9 @@ def iniciarSesion():
         registro_usuario = cursor.fetchone()
 
         usuario_encontrado = None
-        if registro_usuario and registro_usuario['password']:
-            hash_guardado = registro_usuario['password'].encode('utf-8')
-            contrasena_ingresada_bytes = contrasena_ingresada.encode('utf-8')
-
-            if bcrypt.checkpw(contrasena_ingresada_bytes, hash_guardado):
-                usuario_encontrado = [{"Id_Usuario": registro_usuario['idUsuario']}]
+        
+        if registro_usuario and registro_usuario['password'] == contrasena_ingresada:
+            usuario_encontrado = [{"Id_Usuario": registro_usuario['idUsuario']}]
         
         if usuario_encontrado:
             return make_response(jsonify(usuario_encontrado), 200)
@@ -89,13 +86,10 @@ def iniciarSesion():
             return make_response(jsonify({"error": "Usuario y/o Contraseña Incorrecto(s)"}), 401)
 
     except mysql.connector.Error as err:
-        # Esto captura errores de la base de datos (por ejemplo, mala conexión)
         return make_response(jsonify({"error": f"Error de base de datos: {err}"}), 500)
     except Exception as e:
-        # Esto captura cualquier otro error inesperado
         return make_response(jsonify({"error": f"Hubo un error en el servidor: {e}"}), 500)
     finally:
-        # Asegura que el cursor y la conexión se cierren
         if cursor:
             cursor.close()
         if con and con.is_connected():
