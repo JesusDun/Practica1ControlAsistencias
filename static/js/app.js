@@ -91,7 +91,7 @@ app.controller("appCtrl", function ($scope, $http, $window) {
                 // Si la respuesta es exitosa (login correcto)
                 else if (Array.isArray(respuesta) && respuesta.length > 0) {
                     alert("Iniciaste Sesión Correctamente");
-                    $window.location.href = '/empleados'; // Redirección
+                    $window.location.href = '/#/empleados'; // Redirección
                 }
             })
             .fail(function (xhr, status, error) {
