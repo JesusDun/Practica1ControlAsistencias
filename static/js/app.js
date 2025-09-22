@@ -106,8 +106,7 @@ app.controller("appCtrl", function ($scope, $http, $window) {
 });
 
 // =========================================================================
-// MODIFICACIÓN: Controlador para Empleados (Corregido y con Pusher)
-// =========================================================================
+// Controlador para Empleados 
 app.controller("empleadosCtrl", function ($scope, $http) {
     function buscarEmpleados() {
         $.get("/tbodyEmpleados", function (trsHTML) {
