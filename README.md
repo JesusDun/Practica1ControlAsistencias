@@ -19,3 +19,21 @@ Usuario: u760464709_23005019_usr
 Contraseña: ]0Pxl25[
 
 ------------------------------------------------------------------------------
+
+Cuenta de Render ...
+
+Correo: equipobit4@gmail.com
+
+Contraseña: EQUIPO0004
+
+------------------------------------------------------------------------------
+
+° Roles de la Base de Datos ---> Tabla: Usuarios
+
+1.- Administrador.
+
+2.- Empleados.
+
+3.- Visitantes.
+
+------------------------------------------------------------------------------
